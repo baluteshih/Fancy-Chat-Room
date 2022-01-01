@@ -1,8 +1,13 @@
 CXXFLAGS = -O2 -std=c++17 -Wall -std=c++17
-SRCS = helper.cpp http.cpp
+SRCS = src/helper.cpp src/http.cpp
 OBJS = $(patsubst %.cpp, %.o, $(SRCS))
+INC = -I src
 
 all: $(OBJS)
+
+ifeq ($(DEBUG),1)
+   CXXFLAGS += -DDEBUG -g
+endif
 
 depend: .depend
 
@@ -12,7 +17,10 @@ depend: .depend
 
 include .depend
 
+test: test.cpp $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INC) $(OBJS) test.cpp -o test
+
 %.o: %.cpp
-	$(CXX) -c $< 
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 clean:
-	rm -rf *.o .depend
+	rm -rf $(OBJS) .depend test
