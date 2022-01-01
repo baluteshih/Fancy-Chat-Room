@@ -1,6 +1,8 @@
 #ifndef _HELPER_HPP_
 #define _HELPER_HPP_
 
+#include <string>
+
 void _failed(const std::string &msg, const std::string &name, int line);
 void _failed(const std::string &msg, const std::string &name, int line, bool errornum);
 void _failed(const std::string &msg, const std::string &name, int line, bool errornum, int exitcode);

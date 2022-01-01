@@ -1,5 +1,5 @@
 CXXFLAGS = -O2 -std=c++17 -Wall -std=c++17
-SRCS = helper.cpp
+SRCS = helper.cpp http.cpp
 OBJS = $(patsubst %.cpp, %.o, $(SRCS))
 
 all: $(OBJS)
