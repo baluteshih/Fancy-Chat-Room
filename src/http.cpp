@@ -1,4 +1,5 @@
 #include "http.hpp"
+#include "helper.hpp"
 
 std::string HTTP::Reason_phrase(int code) {
     switch (code) {

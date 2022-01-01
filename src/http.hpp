@@ -1,7 +1,6 @@
 #ifndef _HTTP_HPP_
 #define _HTTP_HPP_
 
-#include "helper.hpp"
 #include <string>
 
 class HTTP {

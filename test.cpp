@@ -1,6 +1,7 @@
 #include <iostream>
 #include "helper.hpp"
 #include "http.hpp"
+#include "socket.hpp"
 
 int main() {
     Helper::warning("this is just a testing", __INFO__);

@@ -1,5 +1,5 @@
-CXXFLAGS = -O2 -std=c++17 -Wall -std=c++17
-SRCS = src/helper.cpp src/http.cpp
+CXXFLAGS = -O2 -std=c++17 -Wall
+SRCS = src/helper.cpp src/http.cpp src/socket.cpp
 OBJS = $(patsubst %.cpp, %.o, $(SRCS))
 INC = -I src
 
