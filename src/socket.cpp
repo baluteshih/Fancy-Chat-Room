@@ -24,7 +24,7 @@ int Socket::read(void *buf, size_t count) {
             errno = 0;
             return 0;
         }
-        Helper::warning("fd" + std::to_string(fd) + " reading error", __INFO__, 1);
+        _helper_warning2("fd" + std::to_string(fd) + " reading error", 1);
         close(fd);
         fd = -1;
     }
@@ -38,7 +38,7 @@ int Socket::write(void *buf, size_t count) {
             errno = 0;
             return 0;
         }
-        Helper::warning("fd" + std::to_string(fd) + " writing error", __INFO__, 1);
+        _helper_warning2("fd" + std::to_string(fd) + " writing error", 1);
         close(fd);
         fd = -1;
     }
