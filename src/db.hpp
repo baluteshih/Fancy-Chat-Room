@@ -13,7 +13,7 @@ class DataBase {
     */
     class Table_User {
     public:
-        Table_User(){}
+        Table_User();
         int create_user(User &user);
         /* 
         return 0 if successfully added, and modify user.userid
@@ -33,7 +33,7 @@ class DataBase {
     };
     class Table_Message {
     public:
-        Table_Message(){}
+        Table_Message();
         int create_message(Message &message);
         /*
         return 0 if successfully added, and modify message.message_id
@@ -48,7 +48,7 @@ class DataBase {
     };
     class Table_Chatroom {
     public:
-        Table_Chatroom(){}
+        Table_Chatroom();
         int create_chatroom(Chatroom &chatroom);
         /*
         return 0 if successfully added, and modify chatroom.chatroom_id
@@ -64,7 +64,7 @@ class DataBase {
         Chatroom get_object(int chatroom_id);
     };
 public:
-    DataBase(){}
+    DataBase();
     Table_User     table_user;
     Table_Message  table_message;
     Table_Chatroom table_chatroom;

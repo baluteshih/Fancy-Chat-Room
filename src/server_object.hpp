@@ -6,7 +6,7 @@ zero based id!!
 */
 
 class User {
-    User(std::string _name, std::string _pass, std::vector<int> _list, int _id = 0){}
+    User(std::string _name, std::string _pass, std::vector<int> _list, int _id = 0);
     std::string username;
     /*
     a unique name
@@ -23,7 +23,7 @@ class User {
 };
 
 class Message {
-    Message(int _cid, int _sid, long long _time, std::string _txt, std::string _hash, int _type, int _seqid = 0, int _mid = 0){}
+    Message(int _cid, int _sid, long long _time, std::string _txt, std::string _hash, int _type, int _seqid = 0, int _mid = 0);
     int chatroom_id;
     int sender_id;
     long long timestamp;
@@ -52,7 +52,7 @@ class Message {
 };
 
 class Chatroom {
-    Chatroom(std::vector<int> _list, int _id = 0){}
+    Chatroom(std::vector<int> _list, int _id = 0);
     std::vector<int> user_idlist;
     int chatroom_id;
     /*
