@@ -40,4 +40,10 @@
 #define _helper_msg(msg)
 #endif
 
+#define _helper_log(msg) {\
+    std::cerr << "\033[1;37m" << std::string(__FILE__) + ":" + std::to_string(__LINE__) + ":" + "\033[0m" << " ";\
+    std::cerr << "\033[1;32m" << "log:" << "\033[0m" << " " << (msg) << std::endl;\
+}
+#else
+
 #endif // _HELPER_HPP_
