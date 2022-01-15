@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <h1><a href="`">Fancy Chat Room</a></h1>
+<body>
+    <h3>Create Your New Chat Room</h3>
+    <form action="@" method="POST">
+        <label for="name">Chat Room Name:</label><br>
+        <input type="text" id="name" name="name"><br>
+        <label for="memberlist">Member List (usernames separated with commas):</label><br>
+        <input type="text" id="memberlist" name="memberlist"><br>
+        <button>Create</button>
+    </form>
+    <h3>Change Member List</h3>
+    <form action="&" method="POST">
+        <label for="name">Chat Room Name:</label><br>
+        <input type="text" id="name" name="name"><br>
+        <label for="username">Username:</label><br>
+        <input type="text" id="username" name="username"><br>
+        <input type="radio" id="operation" name="operation" value="Add">Add into the chat room<br>
+        <input type="radio" id="operation" name="operation" value="Remove">Kick from the chat room<br>
+        <button>Do!</button>
+    </form>
+    <h3>This Is Your Chat Room List</h3>
+$
+</body>
+</html>
