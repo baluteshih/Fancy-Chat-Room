@@ -2,10 +2,15 @@
 #define _HTTP_HPP_
 
 #include <string>
+#include <unordered_map>
+#include "socket.hpp"
+#include "file.hpp"
+
+const int HTTPBUFSIZE = 65536;
 
 class HTTP {
 public:
-    enum class Code {
+    enum class Status_Code {
         Continue           = 100,
         SwitchingProtocols = 101,
 
@@ -56,5 +61,51 @@ public:
     std::string Reason_phrase(int code);
 };
 
+class HTTPRequest : public HTTP {
+    int type;
+public:
+    std::string method;
+    std::string request_target;
+    std::string version;
+    std::unordered_map<std::string, std::string> header_field;
+    std::string message_body;
+    File file;
+    HTTPRequest();
+    void set_type(std::string tp);
+    std::string get_type();
+};
+
+class HTTPResponse : public HTTP {
+    int type;
+public:
+    std::string version;
+    Status_Code status_code;
+    std::unordered_map<std::string, std::string> header_field;
+    std::string message_body;
+    File file;
+    HTTPResponse();
+    void set_type(std::string tp);
+    std::string get_type();
+    void set_message(const std::string &message);
+    void set_file(const std::string &file_name);
+    void set_notfound();
+};
+
+class HTTPSender : public HTTP {
+    Socket skt;
+public:
+    std::string host;
+    HTTPSender(int _fd);
+    HTTPRequest request();
+    int response(HTTPResponse &res);
+};
+
+class HTTPServer : public HTTP {
+    int port_number;
+    Socket skt;
+public:
+    HTTPServer(int _port);
+    HTTPSender* wait_client();
+};
 
 #endif // _HTTP_HPP_

@@ -1,5 +1,5 @@
-CXXFLAGS = -O2 -std=c++17 -Wall
-SRCS = src/helper.cpp src/http.cpp src/socket.cpp
+CXXFLAGS = -O2 -std=c++17 -Wall -pthread
+SRCS = src/helper.cpp src/http.cpp src/socket.cpp src/main_thread.cpp src/file.cpp
 OBJS = $(patsubst %.cpp, %.o, $(SRCS))
 INC = -I src
 
@@ -17,8 +17,15 @@ depend: .depend
 
 include .depend
 
+server: server.cpp $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INC) -c server.cpp -o server.o
+	$(CXX) $(CXXFLAGS) $(INC) $(OBJS) server.o -o server
+
 test: test.cpp $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INC) $(OBJS) test.cpp -o test
+
+http_test: http_test.cpp $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INC) $(OBJS) http_test.cpp -o http_test
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
