@@ -28,6 +28,10 @@ private:
         return -1 if the username already exists 
         */
         int update_password(int userid, std::string password);
+        /*
+        return 0 if password is successfully changed
+        if failed, an error will be triggered
+        */
         int add_friend(int userid, int friendid);
         /*
         return -1 if the user already has a friend with id "friendid"
@@ -53,9 +57,12 @@ private:
         int get_id(int chatroom_id, int sequence_id);
         std::vector<Message> query_range_fixed_chatroom(int chatroom_id, int lower, int upper);
         /*
-        return vector of Message which ids between [lower, upper]
+        return vector of Message which sequence ids between [lower, upper]
         */
         int maxseqid_of_chatroom(int chatroom_id);
+        /*
+        return -1 if that chatroom doesn't have any message yet
+        */
     };
     class Table_Chatroom {
     private:

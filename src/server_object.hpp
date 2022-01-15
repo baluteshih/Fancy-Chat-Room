@@ -10,6 +10,7 @@ one based id!!
 
 class User {
 public:
+    User();
     User(std::string _name, std::string _pass, std::vector<int> _list, int _id = 0);
     std::string username;
     /*
@@ -28,6 +29,7 @@ public:
 
 class Message {
 public:
+    Message();
     Message(int _cid, int _sid, long long _time, std::string _txt, std::string _hash, int _type, int _seqid = 0, int _mid = 0);
     int chatroom_id;
     int sender_id;
@@ -58,6 +60,7 @@ public:
 
 class Chatroom {
 public:
+    Chatroom();
     Chatroom(std::vector<int> _list, int _id = 0);
     std::vector<int> user_idlist;
     int chatroom_id;
