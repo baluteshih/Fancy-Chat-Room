@@ -76,6 +76,5 @@ int Socket::write(const std::string &msg) {
             return rt;
         cur += rt;
     }
-    _helper_msg("written " + msg);
     return cur;
 }
