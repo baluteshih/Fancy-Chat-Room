@@ -8,15 +8,14 @@ int main(int argc, char *argv[]) {
     HTTPServer server(atoi(argv[1]));
     while (true) {
         HTTPSender* client = server.wait_client();
-        _helper_msg("Here");
-        HTTPRequest req = client->request();
+        HTTPRequest req = client->read_request();
         if (req.get_type() == "UNKNOWN")
             break;
         if (req.request_target == "/")
             req.request_target = "/index.html";
         HTTPResponse res;
-        res.set_file(CLIENT_PUBLIC_DIR + req.request_target);
-        if (client->response(res) < 0)
+        res.set_file(SERVER_PUBLIC_DIR + req.request_target);
+        if (client->send_response(res) < 0)
             _helper_warning("response error");
         delete client;
     }

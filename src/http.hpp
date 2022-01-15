@@ -61,34 +61,40 @@ public:
     std::string Reason_phrase(int code);
 };
 
-class HTTPRequest : public HTTP {
+class HTTPHeader : public HTTP {
+private:
     int type;
+public:
+    std::string version;
+    std::unordered_map<std::string, std::string> header_field;
+    std::string message_body;
+    File file;
+    void set_type(std::string tp);
+    std::string get_type();
+    int read_header_field(Socket &skt);
+    int write_header_field(Socket &skt);
+    int read_content(Socket &skt);
+    int write_content(Socket &skt);
+    explicit HTTPHeader();
+};
+
+class HTTPRequest : public HTTPHeader {
+private:
 public:
     std::string method;
     std::string request_target;
-    std::string version;
-    std::unordered_map<std::string, std::string> header_field;
-    std::string message_body;
-    File file;
-    HTTPRequest();
-    void set_type(std::string tp);
-    std::string get_type();
+    explicit HTTPRequest();
 };
 
-class HTTPResponse : public HTTP {
-    int type;
+class HTTPResponse : public HTTPHeader {
+private:
 public:
-    std::string version;
     Status_Code status_code;
-    std::unordered_map<std::string, std::string> header_field;
-    std::string message_body;
-    File file;
-    HTTPResponse();
-    void set_type(std::string tp);
-    std::string get_type();
+    explicit HTTPResponse();
     void set_message(const std::string &message);
     void set_file(const std::string &file_name);
-    void set_notfound();
+    void set_redirect(const std::string &location);
+    void set_status(Status_Code status);
 };
 
 class HTTPSender : public HTTP {
@@ -96,8 +102,10 @@ class HTTPSender : public HTTP {
 public:
     std::string host;
     HTTPSender(int _fd);
-    HTTPRequest request();
-    int response(HTTPResponse &res);
+    HTTPRequest read_request();
+    int send_request(HTTPRequest &req);
+    HTTPResponse read_response();
+    int send_response(HTTPResponse &res);
 };
 
 class HTTPServer : public HTTP {

@@ -1,6 +1,7 @@
 #include "socket.hpp"
 #include "helper.hpp"
 #include <sys/socket.h>
+#include <sys/poll.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string>
@@ -29,7 +30,15 @@ int Socket::init(int _fd) {
 }
 
 int Socket::read(void *buf, size_t count) {
-    int num = recv(fd, buf, count, 0); // MSG_DONTWAIT);
+    while (1) {
+        struct pollfd pfds[1];
+        pfds[0].fd = fd;
+        pfds[0].events = POLLIN;
+        poll(pfds, 1, -1);
+        if (pfds[0].revents & POLLIN)
+            break;
+    }
+    int num = recv(fd, buf, count, MSG_DONTWAIT);
     if (num <= 0) {
         if (errno == EINTR || errno == EAGAIN) {
             errno = 0;
