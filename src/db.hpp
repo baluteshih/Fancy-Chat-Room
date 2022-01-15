@@ -27,21 +27,32 @@ private:
         return 0 if successfully added, and modify user.userid
         return -1 if the username already exists 
         */
-        int update_password(int userid, std::string password);
+        
+        int update_password(int user_id, std::string password);
         /*
         return 0 if password is successfully changed
         if failed, an error will be triggered
         */
-        int add_friend(int userid, int friendid);
+        
+        int add_friend(int user_id, int friendid);
         /*
         return -1 if the user already has a friend with id "friendid"
         */
+        
         int delete_friend(int user_id, int friendid);
         /*
         return -1 if there is no friend with id "friendid"
         */
+
         User get_object(int user_id);
+        /*
+        return default value (see server_object.cpp) for User if no such user_id
+        */
+
         int get_id(std::string username);
+        /*
+        return -1 if there is no such user
+        */
     };
     class Table_Message {
     private:
@@ -53,12 +64,22 @@ private:
         /*
         return 0 if successfully added, and modify message.message_id
         */
+        
         Message get_object(int message_id);
+        /*
+        return default value (see server_object.cpp) for Message if no such message_id
+        */
+
         int get_id(int chatroom_id, int sequence_id);
+        /*
+        return -1 if there is no such message
+        */
+
         std::vector<Message> query_range_fixed_chatroom(int chatroom_id, int lower, int upper);
         /*
         return vector of Message which sequence ids between [lower, upper]
         */
+        
         int maxseqid_of_chatroom(int chatroom_id);
         /*
         return -1 if that chatroom doesn't have any message yet
@@ -74,14 +95,17 @@ private:
         /*
         return 0 if successfully added, and modify chatroom.chatroom_id
         */
+        
         int add_user(int chatroom_id, int user_id);
         /*
         return -1 if the user already in the chatroom
         */
+        
         int delete_user(int chatroom_id, int user_id);
         /*
         return -1 if the user not in the chatroom
         */
+        
         Chatroom get_object(int chatroom_id);
     };
 public:

@@ -194,7 +194,7 @@ int DataBase::Table_User::get_id(std::string username){
         sqlite3_free(zErrMsg);
         _helper_fail("Fail to get user.");
     }
-    return user.user_id;
+    return user.user_id ? user.user_id : -1; // if user_id == 0, return -1
 }
 int DataBase::Table_User::add_friend(int user_id, int friendid){
     User user = this->get_object(user_id);
@@ -346,7 +346,7 @@ int DataBase::Table_Message::get_id(int chatroom_id, int sequence_id){
         sqlite3_free(zErrMsg);
         _helper_fail("Fail to get message.");
     }
-    return message.message_id;
+    return message.message_id ? message.message_id : -1;
 }
 std::vector<Message> DataBase::Table_Message::query_range_fixed_chatroom
 (int chatroom_id, int lower, int upper){
