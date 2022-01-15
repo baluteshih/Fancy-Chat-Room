@@ -15,7 +15,7 @@ class DataBase {
     Return <0 value when failure. Different values represent different kinds of errors 
     */
 private:
-    static sqlite3 *db;
+    sqlite3 *db;
     class Table_User {
     private:
         DataBase &parent;

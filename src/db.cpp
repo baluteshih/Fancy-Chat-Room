@@ -78,7 +78,7 @@ int DataBase::Table_User::create_user(User &user){
 
     int exist = 0;
     sqlcmd = "SELECT EXISTS (SELECT 1 FROM table_user WHERE username=\"" + user.username + "\");";
-    res = sqlite3_exec(db, sqlcmd.c_str(), callback_exist, &exist, &zErrMsg);
+    res = sqlite3_exec(parent.db, sqlcmd.c_str(), callback_exist, &exist, &zErrMsg);
     if (res != SQLITE_OK){
         sqlite3_free(zErrMsg);
         _helper_fail("Fail to check if the username exists.");
@@ -87,7 +87,7 @@ int DataBase::Table_User::create_user(User &user){
         return -1;
 
     int count = 0;
-    res = sqlite3_exec(db, "select count(*) from table_user", 
+    res = sqlite3_exec(parent.db, "select count(*) from table_user", 
                        callback_countrow, &count, &zErrMsg);
     if (res != SQLITE_OK){
         sqlite3_free(zErrMsg);
@@ -107,7 +107,7 @@ int DataBase::Table_User::create_user(User &user){
     sqlcmd += "\"" + friend_idlist_in_str + "\", ";
     sqlcmd += "\"" + std::to_string(user.user_id) + "\");";
 
-    res = sqlite3_exec(db, sqlcmd.c_str(), callback, 0, &zErrMsg);
+    res = sqlite3_exec(parent.db, sqlcmd.c_str(), callback, 0, &zErrMsg);
     if (res != SQLITE_OK){
         sqlite3_free(zErrMsg);
         _helper_fail("Fail to add user.");
