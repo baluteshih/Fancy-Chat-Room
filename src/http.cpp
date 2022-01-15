@@ -354,6 +354,7 @@ int HTTPSender::send_response(HTTPResponse &res) {
 
 HTTPServer::HTTPServer(int _port) : port_number(_port), skt() {
     skt.init();
+    _helper_msg("Server listen socket: " + std::to_string(skt.fd));
     struct sockaddr_in sockinfo;
     memset(&sockinfo, 0, sizeof sockinfo);
     sockinfo.sin_family = AF_INET;

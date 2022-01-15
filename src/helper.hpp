@@ -2,6 +2,7 @@
 #define _HELPER_HPP_
 
 #include <string>
+#include <vector>
 #include <iostream>
 
 #define _helper_fail3(msg, errornum, exitcode) {\
@@ -44,6 +45,9 @@
     std::cerr << "\033[1;37m" << std::string(__FILE__) + ":" + std::to_string(__LINE__) + ":" + "\033[0m" << " ";\
     std::cerr << "\033[1;32m" << "log:" << "\033[0m" << " " << (msg) << std::endl;\
 }
-#else
+
+std::string svector_to_string(const std::vector<std::string> &vec); 
+
+std::vector<std::string> string_to_svector(const std::string &str); 
 
 #endif // _HELPER_HPP_

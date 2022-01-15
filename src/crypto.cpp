@@ -10,10 +10,7 @@ void random_init() {
 }
 
 std::string Random_Engine::gen_random_string(int len) {
-    static const std::string alphanum =
-        "0123456789\
-         ABCDEFGHIJKLMNOPQRSTUVWXYZ\
-         abcdefghijklmnopqrstuvwxyz";
+    static const std::string alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     std::string rt;
     std::uniform_int_distribution<int> dist(0, int(alphanum.size()) - 1);
     for (int i = 0; i < len; ++i) {

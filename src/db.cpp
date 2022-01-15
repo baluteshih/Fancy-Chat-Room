@@ -187,10 +187,14 @@ int DataBase::Table_User::get_id(std::string username){
     char *zErrMsg;
     std::string sqlcmd;
 
-    sqlcmd = "SELECT * FROM table_user WHERE username = " + username + ";";
+    sqlcmd = "SELECT * FROM table_user WHERE username = \"" + username + "\";";
 
     User user;
     res = sqlite3_exec(parent.db, sqlcmd.c_str(), callback_getuser, &user, &zErrMsg);
+    
+    _helper_msg(username);
+    _helper_msg(zErrMsg);
+
     if (res != SQLITE_OK){
         sqlite3_free(zErrMsg);
         return -1;
