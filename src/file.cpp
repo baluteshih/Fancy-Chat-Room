@@ -3,6 +3,8 @@
 #include <cstdio>
 
 std::string path_combine(std::string path1, std::string path2) {
+    while (!path2.empty() && path2[0] == '/')
+        path2.erase(path2.begin());
     return path1 + "/" + path2;
 }
 
