@@ -177,6 +177,7 @@ User DataBase::Table_User::get_object(int user_id){
     res = sqlite3_exec(parent.db, sqlcmd.c_str(), callback_getuser, &user, &zErrMsg);
     if (res != SQLITE_OK){
         sqlite3_free(zErrMsg);
+        return User();
         _helper_fail("Fail to get user.");
     }
     return user;
@@ -192,6 +193,7 @@ int DataBase::Table_User::get_id(std::string username){
     res = sqlite3_exec(parent.db, sqlcmd.c_str(), callback_getuser, &user, &zErrMsg);
     if (res != SQLITE_OK){
         sqlite3_free(zErrMsg);
+        return -1;
         _helper_fail("Fail to get user.");
     }
     return user.user_id ? user.user_id : -1; // if user_id == 0, return -1
@@ -329,6 +331,7 @@ Message DataBase::Table_Message::get_object(int message_id){
     res = sqlite3_exec(parent.db, sqlcmd.c_str(), callback_getmessage, &message, &zErrMsg);
     if (res != SQLITE_OK){
         sqlite3_free(zErrMsg);
+        return Message();
         _helper_fail("Fail to get message.");
     }
     return message;
@@ -344,6 +347,7 @@ int DataBase::Table_Message::get_id(int chatroom_id, int sequence_id){
     res = sqlite3_exec(parent.db, sqlcmd.c_str(), callback_getmessage, &message, &zErrMsg);
     if (res != SQLITE_OK){
         sqlite3_free(zErrMsg);
+        return -1;
         _helper_fail("Fail to get message.");
     }
     return message.message_id ? message.message_id : -1;
@@ -437,6 +441,7 @@ Chatroom DataBase::Table_Chatroom::get_object(int chatroom_id){
     res = sqlite3_exec(parent.db, sqlcmd.c_str(), callback_getchatroom, &chatroom, &zErrMsg);
     if (res != SQLITE_OK){
         sqlite3_free(zErrMsg);
+        return Chatroom();
         _helper_fail("Fail to get chatroom.");
     }
     return chatroom;
