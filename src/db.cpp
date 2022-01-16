@@ -284,7 +284,8 @@ int DataBase::Table_Message::create_message(Message &message){
     }
 
     message.message_id = count + 1;
-
+    message.sequence_id = this->maxseqid_of_chatroom(message.chatroom_id) + 1;
+    
     sqlcmd = "INSERT INTO table_message (chatroom_id, sender_id, timestamp, text, filehash, type, sequence_id, message_id) VALUES (";
     sqlcmd += std::to_string(message.chatroom_id) + ", ";
     sqlcmd += std::to_string(message.sender_id) + ", ";
