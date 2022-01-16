@@ -359,11 +359,11 @@ int DataBase::Table_Message::get_id(int chatroom_id, int sequence_id){
 }
 std::vector<Message> DataBase::Table_Message::query_range_fixed_chatroom
 (int chatroom_id, int lower, int upper){
-    lower = max(1, lower);
-    upper = min(this->maxseqid_of_chatroom(chatroom_id), upper);
+    lower = std::max(1, lower);
+    upper = std::min(this->maxseqid_of_chatroom(chatroom_id), upper);
 
     if (lower > upper)
-        return vector<Message>();
+        return std::vector<Message>();
 
     std::vector<Message> ans;
     for (int i = lower; i <= upper; i++)
