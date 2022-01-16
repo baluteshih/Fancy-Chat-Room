@@ -7,12 +7,21 @@
     <a href="#"><button>Next Page &gt;</button></a>
     <br>
 $
-    <form action="%" method="post">
+    <form action="%" method="POST">
         <label for="message">Type your message here:</label>
         <input type="text" id="message" name="message">
         <button>Send</button><br>
         <label for="file">Or choose files to upload:</label>
         <input type="file" id="file" name="file" multiple>
+    </form>
+    <br>
+    <h3>Change Member List</h3>
+    <form action="&" method="POST">
+        <label for="username">Username:</label><br>
+        <input type="text" id="username" name="username"><br>
+        <input type="radio" id="operation" name="operation" value="Add">Add into the chat room<br>
+        <input type="radio" id="operation" name="operation" value="Remove">Kick from the chat room<br>
+        <button>Do!</button>
     </form>
 </body>
 </html>
