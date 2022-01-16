@@ -216,6 +216,37 @@ namespace Handler {
         }
         return flist;
     }
+    int create_chatroom(User &user, std::vector<Chatroom> &roomlist, std::string member) {
+        _helper_log(user.username + " create chatroom with " + member);
+        int mid = db.table_user.get_id(member);
+        if (mid > 0) {
+            int flag = 0;
+            if (mid == user.user_id)
+                flag = 1;
+            for (int fid : user.friend_idlist) {
+                if (fid == mid)
+                    flag = 1;
+            }
+            if (flag == 1) {
+                for (auto chat : roomlist) {
+                    if (chat.user_idlist.size() == 2 && 
+                        ((chat.user_idlist[0] == mid && chat.user_idlist[1] == user.user_id) ||
+                         (chat.user_idlist[0] == user.user_id && chat.user_idlist[1] == mid)))
+                        return chat.chatroom_id;
+                    if (chat.user_idlist.size() == 1 && chat.user_idlist[0] == mid)
+                        return chat.chatroom_id;
+                }
+                Chatroom cht;
+                cht.user_idlist.push_back(user.user_id);
+                if (mid != user.user_id)
+                    cht.user_idlist.push_back(mid);
+                db.table_chatroom.create_chatroom(cht);
+                return cht.chatroom_id;
+            }
+            return 0;
+        }
+        return 0;
+    }
 };
 
 void help(char *name) {
@@ -315,43 +346,35 @@ void client_handler(HTTPSender *connection) {
                 req.request_target.erase(0, 9);
                 if (req.request_target.empty()) {
                     auto roomlist = db.table_chatroom.get_chatroom_list(user.user_id);
-                    if (req.method == "GET") {
-                        std::vector<std::string> chatlist;
-                        std::vector<std::string> hreflist;
-                        for (auto chat : roomlist) {
-                            chatlist.push_back(Handler::get_chatroom_name(chat));
-                            hreflist.push_back("chatroom/" + std::to_string(chat.chatroom_id));
+                    if (req.method == "GET") { 
+                        if (Handler::is_console(req)) {
+                            _helper_log("receive message_body = " + req.message_body);
+                            auto dataraw = Handler::data_parser(req.message_body); 
+                            if (dataraw.find("member") == dataraw.end()) {
+                                res.set_status(HTTP::Status_Code::NotAcceptable);
+                                goto done;
+                            }
+                            int chat_id = Handler::create_chatroom(user, roomlist, dataraw["member"]);
+                            int maxid = db.table_message.maxseqid_of_chatroom(chat_id);
+                            res.set_message(std::to_string(chat_id) + " " + std::to_string(maxid));
                         }
-                        res.set_message(manage_chatroom(chatlist, hreflist, "chatroom", "/"), true);
+                        else {   
+                            std::vector<std::string> chatlist;
+                            std::vector<std::string> hreflist;
+                            for (auto chat : roomlist) {
+                                chatlist.push_back(Handler::get_chatroom_name(chat));
+                                hreflist.push_back("chatroom/" + std::to_string(chat.chatroom_id));
+                            }
+                            res.set_message(manage_chatroom(chatlist, hreflist, "chatroom", "/"), true);
+                        }
                     }
                     else if (req.method == "POST") {
                         auto dataraw = Handler::data_parser(req.message_body); 
                         if (dataraw.find("member") == dataraw.end()) {
                             res.set_status(HTTP::Status_Code::NotAcceptable);
+                            goto done;
                         }
-                        int mid = db.table_user.get_id(dataraw["member"]);
-                        if (mid > 0) {
-                            int flag = 0;
-                            if (mid == user.user_id)
-                                flag = 1;
-                            for (int fid : user.friend_idlist) {
-                                if (fid == mid)
-                                    flag = 1;
-                            }
-                            if (flag == 1) {
-                                for (auto chat : roomlist) {
-                                    if (chat.user_idlist.size() == 1 && chat.user_idlist[0] == mid)
-                                        flag = 0;
-                                }
-                                if (flag == 1) {
-                                    Chatroom cht;
-                                    cht.user_idlist.push_back(user.user_id);
-                                    if (mid != user.user_id)
-                                        cht.user_idlist.push_back(mid);
-                                    db.table_chatroom.create_chatroom(cht);
-                                }
-                            }
-                        }
+                        Handler::create_chatroom(user, roomlist, dataraw["member"]);
                         res.set_redirect(res.header_field["Host"] + "/chatroom");
                     }
                     else {
@@ -392,7 +415,7 @@ void client_handler(HTTPSender *connection) {
                             }
                             auto dataraw = Handler::data_parser(req.message_body); 
                             if (dataraw.find("username") == dataraw.end() ||
-                                dataraw.find("operation") == dataraw.end()) {
+                                    dataraw.find("operation") == dataraw.end()) {
                                 res.set_status(HTTP::Status_Code::NotAcceptable);
                                 goto done;
                             }
@@ -443,7 +466,10 @@ void client_handler(HTTPSender *connection) {
                             message.text = req.message_body;
                             message.type = 0;
                             db.table_message.create_message(message);
-                            res.set_redirect(res.header_field["Host"] + "/" + target_stack);
+                            if (Handler::is_console(req))
+                                res.set_message(std::to_string(db.table_message.maxseqid_of_chatroom(chat_id)));
+                            else
+                                res.set_redirect(res.header_field["Host"] + "/" + target_stack);
                         }
                         else if (req.request_target == "/upload") {
                             if (req.method != "POST") {
@@ -560,10 +586,16 @@ void client_handler(HTTPSender *connection) {
                                     }
                                     else if (msg.type == 1) {
                                         if (get_file_type(msg.text) == "image") {
-                                            result += img("download/" + msg.filehash);
+                                            if (Handler::is_console(req))
+                                                result += "[image " + msg.text + "]";
+                                            else
+                                                result += img("download/" + msg.filehash);
                                         }
                                         else {
-                                            result += href("download/" + msg.filehash, msg.text); 
+                                            if (Handler::is_console(req))
+                                                result += "[file " + msg.text + "]";
+                                            else
+                                                result += href("download/" + msg.filehash, msg.text); 
                                         }
                                     } 
                                     else {
@@ -571,8 +603,15 @@ void client_handler(HTTPSender *connection) {
                                     }
                                     mlist.push_back(result);
                                 }
-
-                                res.set_message(chat_page(name, mlist, plink, nlink, "send", "upload", "manage_member", "/"), true);
+                                if (Handler::is_console(req)) {
+                                    std::string msg;
+                                    msg += std::to_string(db.table_message.maxseqid_of_chatroom(chat_id)) + "\n";
+                                    for (auto str : mlist)
+                                        msg += str + "\n";
+                                    res.set_message(msg);
+                                }
+                                else
+                                    res.set_message(chat_page(name, mlist, plink, nlink, "send", "upload", "manage_member", "/"), true);
                             }
                             else {
                                 res.set_status(HTTP::Status_Code::MethodNotAllowed);

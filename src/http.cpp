@@ -191,19 +191,22 @@ int HTTPHeader::write_content(Socket &skt) {
 
 HTTPRequest::HTTPRequest() : HTTPHeader() {}
 
-void HTTPRequest::set_message(const std::string &message, const std::string &tar, const std::string &_method) {
+void HTTPRequest::set_message(const std::string &message, const std::string &tar, const std::string &_method, const std::string &cookie) {
     header_field.clear();
     message_body = message;
     method = _method;
     request_target = tar;
     version = "HTTP/1.1";
+    if (!cookie.empty())
+        header_field["Cookie"] = cookie;
+    header_field["User-Agent"] = CONSOLE_AGENT;
     header_field["Content-Type"] = "text/plain";
     header_field["Content-Length"] = std::to_string(message_body.size());
     header_field["Connection"] = "keep-alive";
     set_type("TEXT");
 }
 
-void HTTPRequest::set_file(const std::string &file_name, const std::string &tar, const std::string &_method) {
+void HTTPRequest::set_file(const std::string &file_name, const std::string &tar, const std::string &_method, const std::string &cookie) {
     header_field.clear();
     if (file.file_open_read(file_name) < 0) {
         set_type("UNKNOWN");
@@ -212,6 +215,8 @@ void HTTPRequest::set_file(const std::string &file_name, const std::string &tar,
     version = "HTTP/1.1";
     method = _method;
     request_target = tar;
+    if (!cookie.empty())
+        header_field["Cookie"] = cookie;
     header_field["Content-Type"] = file.type() + "/" + file.extension();
     header_field["Content-Length"] = std::to_string(file.size());
     header_field["Connection"] = "keep-alive";
@@ -252,6 +257,18 @@ void HTTPResponse::set_file(const std::string &file_name) {
     header_field["Content-Length"] = std::to_string(file.size());
     header_field["Connection"] = "Close";
     set_type("FILE");
+}
+
+void HTTPResponse::set_predirect(const std::string &location) {
+    status_code = Status_Code::MovedPermanently;
+    header_field.clear();
+    version = "HTTP/1.1";
+    header_field["Server"] = "Fancy Chat Proxy";
+    header_field["Location"] = location;
+    header_field["Content-Type"] = "text/plain";
+    header_field["Content-Length"] = "0";
+    header_field["Connection"] = "Close";
+    set_type("TEXT");
 }
 
 void HTTPResponse::set_redirect(const std::string &location) {
@@ -342,6 +359,10 @@ int HTTPSender::send_request(HTTPRequest &req) {
         return -1;
     if (req.write_content(skt) < 0)
         return -1;
+    _helper_log(req.method + " " + req.request_target + " " + req.version);
+    for (auto [n, v] : req.header_field)
+        _helper_log(n + ": " + v);
+    _helper_log(req.message_body);
     return 0;
 }
 
@@ -367,12 +388,16 @@ HTTPResponse HTTPSender::read_response() {
         res.set_type("TEXT");
     }
     else {
-        res.set_type("FILE");
+        res.set_type("TEXT");
+        //res.set_type("FILE");
     }
     if (res.read_content(skt) < 0) {
         return res;
     }
     _helper_log(res.version + " " + std::to_string(int(res.status_code)) + " " + Reason_phrase(int(res.status_code)));
+    for (auto [n, v] : res.header_field)
+        _helper_log(n + ": " + v);
+    _helper_log(res.message_body);
     return res; 
 }
 
