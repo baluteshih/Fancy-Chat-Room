@@ -14,6 +14,7 @@
 #include <string>
 #include <cctype>
 #include <unordered_map>
+#include <chrono>
 
 Main_Thread main_thread;
 DataBase db;
@@ -145,7 +146,6 @@ namespace Handler {
         User user;
         user.username = dataraw["username"];
         user.password = hash_password(dataraw["password"]);
-        _helper_msg(user.password);
         if (db.table_user.create_user(user) < 0) {
             res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_repeat.html"));
         }
@@ -326,7 +326,6 @@ void client_handler(HTTPSender *connection) {
                             res.set_status(HTTP::Status_Code::NotAcceptable);
                         }
                         int mid = db.table_user.get_id(dataraw["member"]);
-                        _helper_log(std::to_string(user.user_id) + " creates chatroom with " + std::to_string(mid));
                         if (mid > 0) {
                             int flag = 0;
                             if (mid == user.user_id)
@@ -428,7 +427,19 @@ void client_handler(HTTPSender *connection) {
                                 res.set_status(HTTP::Status_Code::MethodNotAllowed);
                                 goto done;
                             }
-                            // TODO: action 
+                            if (int(req.message_body.size()) < 8 || req.message_body.substr(0, 8) != "message=") {
+                                res.set_status(HTTP::Status_Code::NotAcceptable);
+                                goto done;
+                            }
+                            req.message_body.erase(0, 8);
+                            Message message;
+                            message.chatroom_id = chat_id;
+                            message.sender_id = user.user_id;
+                            message.timestamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                            message.text = req.message_body;
+                            message.type = 0;
+                            db.table_message.create_message(message);
+                            res.set_redirect(res.header_field["Host"] + "/" + target_stack);
                         }
                         else if (req.request_target == "/upload") {
                             if (req.method != "POST") {
@@ -436,6 +447,7 @@ void client_handler(HTTPSender *connection) {
                                 goto done;
                             }
                             // TODO: action 
+                            res.set_redirect(res.header_field["Host"] + "/" + target_stack);
                         }
                         else if (req.request_target[0] == '/') {
                             req.request_target.erase(0, 1);
@@ -476,7 +488,7 @@ void client_handler(HTTPSender *connection) {
                                     else {
                                         continue;
                                     }
-                                    mlist.push_back(p(result));
+                                    mlist.push_back(result);
                                 }
 
                                 res.set_message(chat_page(name, mlist, plink, nlink, "send", "upload", "manage_member", "/"), true);
