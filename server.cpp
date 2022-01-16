@@ -380,6 +380,8 @@ void client_handler(HTTPSender *connection) {
         else {
             if (req.request_target == "/")
                 res.set_redirect(res.header_field["Host"] + "/login");
+            else if (req.request_target == "/favicon.ico")
+                res.set_file(path_combine(SERVER_PUBLIC_DIR, "favicon-16x16.png"));
             else
                 res.set_file(path_combine(SERVER_PUBLIC_DIR, req.request_target));
         }
