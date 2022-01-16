@@ -107,6 +107,12 @@ private:
         */
         
         Chatroom get_object(int chatroom_id);
+
+        std::vector<Chatroom> get_chatroom_list(int user_id);
+        /*
+        get a list of chatrooms containing user with user_id
+        return empty vector if this user doesn't have any chatroom
+        */
     };
 public:
     Table_User     table_user;

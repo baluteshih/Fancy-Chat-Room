@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "helper.hpp"
 #include "param.hpp"
 #include "db.hpp"
@@ -512,4 +513,27 @@ int DataBase::Table_Chatroom::delete_user(int chatroom_id, int user_id){
     }
 
     return 0;
+}
+std::vector<Chatroom> DataBase::Table_Chatroom::get_chatroom_list(int user_id){
+    int res;
+    char *zErrMsg = 0;
+    std::string sqlcmd;
+
+    int count = 0;
+    res = sqlite3_exec(parent.db, "select count(*) from table_chatroom", 
+                       callback_countrow, &count, &zErrMsg);
+    if (res != SQLITE_OK){
+        sqlite3_free(zErrMsg);
+        _helper_fail("Fail to find the current number of chatrooms.");
+    }
+    
+    std::vector<Chatroom> ans;
+    for (int i = 1; i <= count; i++){
+        Chatroom chatroom = this->get_object(i);
+        if (std::find(chatroom.user_idlist.begin(), chatroom.user_idlist.end(), user_id) != chatroom.user_idlist.end()){
+            ans.push_back(chatroom);
+        }
+    }
+
+    return ans;
 }
