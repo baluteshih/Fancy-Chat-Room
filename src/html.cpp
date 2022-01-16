@@ -108,7 +108,7 @@ std::string manage_chatroom(std::vector<std::string> chatroom_name, std::vector<
     }
     return ans;
 }
-std::string chat_page(std::string chatroom_name, std::vector<std::string> message, std::string prev_href, std::string next_href, std::string post_action, std::string addr_homepage){
+std::string chat_page(std::string chatroom_name, std::vector<std::string> message, std::string prev_href, std::string next_href, std::string send_action, std::string upload_action, std::string edit_action, std::string addr_homepage){
     const std::string filename(path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "html", "chat_page.html"})));
     std::ifstream input_file(filename);
     std::string ans;
@@ -128,10 +128,16 @@ std::string chat_page(std::string chatroom_name, std::vector<std::string> messag
             ans += next_href;
         }
         else if (c == '%'){
-            ans += post_action;
+            ans += send_action;
+        }
+        else if (c == '^'){
+            ans += upload_action;
         }
         else if (c == '`'){
             ans += addr_homepage;
+        }
+        else if (c == '&'){
+            ans += edit_action;
         }
         else {
             ans += c;

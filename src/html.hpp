@@ -24,15 +24,47 @@ convert a file name to a downloadable html command (i.e. <a href=$download_link>
 */
 // ^^^ These functions are used to generate one single line
 
+
+
+
+
 // vvv These functions are used to generate a whole html file
-std::string homepage(std::string username, std::string addr_manage_friend, std::string addr_list_chatroom, std::string addr_change_password, std::string addr_homepage, std::string addr_logout);
+std::string homepage(
+    std::string username,
+    std::string addr_manage_friend,
+    std::string addr_list_chatroom,
+    std::string addr_change_password,
+    std::string addr_homepage,
+    std::string addr_logout
+);
 
-std::string manage_friend(std::vector<std::string> friend_name, std::string form_action, std::string addr_homepage);
+std::string manage_friend(
+    std::vector<std::string> friend_name,
+    std::string form_action,
+    std::string addr_homepage
+);
 
-std::string manage_chatroom(std::vector<std::string> chatroom_name, std::vector<std::string> href_name, std::string create_action, std::string addr_homepage);
+std::string manage_chatroom(
+    std::vector<std::string> chatroom_name,
+    std::vector<std::string> href_name,
+    std::string create_action,
+    std::string addr_homepage
+);
 
-std::string chat_page(std::string chatroom_name, std::vector<std::string> message, std::string prev_href, std::string next_href, std::string post_action, std::string addr_homepage);
+std::string update_password(
+    std::string change_action,
+    std::string addr_homepage,
+    int type = 0
+);
 
-std::string update_password(std::string change_action, std::string addr_homepage, int type = 0);
-
+std::string chat_page(
+    std::string chatroom_name,
+    std::vector<std::string> message,
+    std::string prev_href,
+    std::string next_href,
+    std::string send_action,
+    std::string upload_action,
+    std::string edit_action,
+    std::string addr_homepage
+);
 #endif // _HTML_HPP_
