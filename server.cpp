@@ -170,15 +170,15 @@ namespace Handler {
         auto rt = cookie_parser(cookie);
         std::string pass = hash_password(dataraw["oldpwd"], rt.second.substr(0, 4));
         if (pass != rt.second) {
-            res.set_message(update_password("setting", "/", 1));
+            res.set_message(update_password("setting", "/", 1), true);
             return;    
         }
         if (!password_format_checker(dataraw["newpwd"])) {
-            res.set_message(update_password("setting", "/", 2));
+            res.set_message(update_password("setting", "/", 2), true);
             return;    
         }
         if (dataraw["newpwd"] != dataraw["newpwd2"]) {
-            res.set_message(update_password("setting", "/", 3));
+            res.set_message(update_password("setting", "/", 3), true);
             return;    
         }
         pass = hash_password(dataraw["newpwd"]);
