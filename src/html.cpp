@@ -10,13 +10,14 @@ std::string img(std::string src){
 std::string href(std::string download_link, std::string filename){
     return "<a href=\"" + download_link + "\">" + filename +"</a>";
 }
-std::string homepage(std::string username, std::string addr_manage_friend, std::string addr_list_chatroom, std::string addr_change_password, std::string addr_homepage){
+std::string homepage(std::string username, std::string addr_manage_friend, std::string addr_list_chatroom, std::string addr_change_password, std::string addr_homepage, std::string addr_logout){
     std::map<std::string, std::string> val;
     val["username"] = username;
     val["addr_manage_friend"] = addr_manage_friend;
     val["addr_list_chatroom"] = addr_list_chatroom;
     val["addr_change_password"] = addr_change_password;
     val["addr_homepage"] = addr_homepage;
+    val["addr_logout"] = addr_logout;
     const std::string filename(path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "html", "homepage.html"})));
     std::ifstream input_file(filename);
     std::string ans;

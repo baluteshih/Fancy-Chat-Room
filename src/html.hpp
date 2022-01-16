@@ -25,7 +25,7 @@ convert a file name to a downloadable html command (i.e. <a href=$download_link>
 // ^^^ These functions are used to generate one single line
 
 // vvv These functions are used to generate a whole html file
-std::string homepage(std::string username, std::string addr_manage_friend, std::string addr_list_chatroom, std::string addr_change_password, std::string addr_homepage);
+std::string homepage(std::string username, std::string addr_manage_friend, std::string addr_list_chatroom, std::string addr_change_password, std::string addr_homepage, std::string addr_logout);
 
 std::string manage_friend(std::vector<std::string> friend_name, std::string form_action, std::string addr_homepage);
 
