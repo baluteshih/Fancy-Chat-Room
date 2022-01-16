@@ -135,10 +135,10 @@ int HTTPHeader::read_content(Socket &skt) {
         char buffer[HTTPBUFSIZE];
         if (get_type() == "FILE") {
             char tempfile[50];
-            #ifdef SERVER
-            strcpy(buffer, path_combine(SERVER_PUBLIC_DIR, TEMP_TEMPLATE).c_str());
+            #ifdef CLIENT
+            strcpy(tempfile, path_combine(CLIENT_PUBLIC_DIR, TEMP_TEMPLATE).c_str());
             #else
-            strcpy(buffer, path_combine(CLIENT_PUBLIC_DIR, TEMP_TEMPLATE).c_str());
+            strcpy(tempfile, path_combine(SERVER_PUBLIC_DIR, TEMP_TEMPLATE).c_str());
             #endif
             if (mkstemp(tempfile) < 0) {
                 set_type("ERROR");
@@ -237,6 +237,10 @@ void HTTPResponse::set_message(const std::string &message, bool ishtml) {
 
 void HTTPResponse::set_file(const std::string &file_name) {
     header_field.clear();
+    if (file_name.find("..") != std::string::npos) {
+        set_status(Status_Code::NotAcceptable);
+        return;
+    }
     if (file.file_open_read(file_name) < 0) {
         set_status(Status_Code::NotFound);
         return;

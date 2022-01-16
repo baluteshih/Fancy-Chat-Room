@@ -7,6 +7,7 @@
 #include "file.hpp"
 #include "crypto.hpp"
 #include "html.hpp"
+#include "SHA256.h"
 #include <iostream>
 #include <unistd.h>
 #include <utility>
@@ -15,6 +16,8 @@
 #include <cctype>
 #include <unordered_map>
 #include <chrono>
+#include <algorithm>
+#include <cstdio>
 
 Main_Thread main_thread;
 DataBase db;
@@ -446,7 +449,75 @@ void client_handler(HTTPSender *connection) {
                                 res.set_status(HTTP::Status_Code::MethodNotAllowed);
                                 goto done;
                             }
-                            // TODO: action 
+                            Message message;
+                            std::string tmp_file_name = req.file.file_name;
+                            std::string lastline;
+                            req.file.file_close();
+                            File tmpf, realf;
+                            tmpf.file_open_read(tmp_file_name);
+                            {
+                                SHA256 sha256sum;
+                                char buffer[FILEBUF];
+                                long long cur = 0;
+                                long long sz = tmpf.size();
+                                while (cur < sz) {
+                                    int rt = tmpf.readf(buffer, std::min(sz - cur, (long long)FILEBUF - 1));
+                                    buffer[rt] = 0;
+                                    sha256sum.update(std::string(buffer));
+                                }
+                                uint8_t *digest = sha256sum.digest();
+                                message.filehash = path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "file", SHA256::toString(digest)}));
+                                delete[] digest;
+                            }
+                            tmpf.seekto(0);
+                            for (int i = 0; i < 4; ++i) {
+                                std::string line;
+                                char c;
+                                while (true) {
+                                    tmpf.readf(&c, 1);
+                                    line.push_back(c);
+                                    if (int(line.size() >= 2) && line.substr(int(line.size()) - 2, 2) == "\r\n") {
+                                        line.pop_back(), line.pop_back();
+                                        break;
+                                    }
+                                }
+                                if (i == 1) {
+                                    line.pop_back();
+                                    int pos = line.find("filename=\"") + 10;
+                                    message.text = line.substr(pos);
+                                    message.filehash += get_file_extension(message.text);
+                                }
+                            }
+                            long long cur = tmpf.get_pos();
+                            long long sz = tmpf.size();
+                            long long endpos = 0;
+                            for (int i = 0, state = 0; i < sz; ++i) {
+                                char c;
+                                tmpf.seekto(sz - i);
+                                tmpf.readf(&c, 1);
+                                lastline.push_back(c);
+                                if (int(lastline.size() >= 2) && lastline.substr(int(lastline.size()) - 2, 2) == "\n\r") {
+                                    if (state == 0)
+                                        ++state;
+                                    else
+                                        break;
+                                }
+                            }
+                            endpos = tmpf.get_pos();
+                            tmpf.seekto(cur);
+                            realf.file_open_write(message.filehash);
+                            char buffer[FILEBUF];
+                            while (cur < endpos) {
+                                int rt = tmpf.readf(buffer, std::min(endpos - cur, (long long)FILEBUF));
+                                realf.writef(buffer, rt);
+                            }
+                            tmpf.file_close(), realf.file_close();
+                            remove(tmp_file_name.c_str());
+                            message.chatroom_id = chat_id;
+                            message.sender_id = user.user_id;
+                            message.timestamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                            message.type = 1;
+                            db.table_message.create_message(message);
                             res.set_redirect(res.header_field["Host"] + "/" + target_stack);
                         }
                         else if (req.request_target[0] == '/') {

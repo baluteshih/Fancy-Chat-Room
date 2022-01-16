@@ -19,12 +19,12 @@ endif
 -include $(DEPS)
 
 server: server.cpp $(OBJS)
-	$(CXX) $(INC) -DSERVER -c server.cpp -o server.o $(CXXFLAGS)
-	$(CXX) $(INC) -DSERVER $(OBJS) server.o -o server $(CXXFLAGS)
+	$(CXX) $(INC) -c server.cpp -o server.o $(CXXFLAGS)
+	$(CXX) $(INC) $(OBJS) server.o -o server $(CXXFLAGS)
 
 client: client.cpp $(OBJS)
-	$(CXX) $(INC) -DCLIENT -c client.cpp -o client.o $(CXXFLAGS) 
-	$(CXX) $(INC) -DCLIENT $(OBJS) client.o -o client $(CXXFLAGS)
+	$(CXX) $(INC) -c client.cpp -o client.o $(CXXFLAGS) 
+	$(CXX) $(INC) $(OBJS) client.o -o client $(CXXFLAGS)
 
 test: test.cpp $(OBJS)
 	$(CXX) $(INC) $(OBJS) test.cpp -o test $(CXXFLAGS)

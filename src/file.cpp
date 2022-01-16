@@ -127,6 +127,14 @@ bool File::is_open() {
     return fp != NULL;
 }
 
+long long File::get_pos() {
+    return ftell(fp); 
+}
+
+int File::seekto(long long pos) {
+    return fseek(fp, pos, SEEK_SET);
+}
+
 size_t File::size() {
     size_t tmp = ftell(fp);
     fseek(fp, 0L, SEEK_END);

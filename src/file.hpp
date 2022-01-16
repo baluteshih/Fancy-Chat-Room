@@ -19,8 +19,8 @@ std::string get_file_type(std::string filename);
 
 class File {
     FILE *fp;
-    std::string file_name;
 public:
+    std::string file_name;
     File();
     size_t readf(void *buf, size_t count);
     size_t writef(void *buf, size_t count);
@@ -28,6 +28,8 @@ public:
     int file_open_write(const std::string &_name);
     int file_close();
     bool is_open();
+    long long get_pos();
+    int seekto(long long pos);
     size_t size();
     std::string extension(); 
     std::string type();
