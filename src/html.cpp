@@ -136,7 +136,7 @@ std::string chat_page(std::string chatroom_name, std::vector<std::string> messag
         else if (c == '`'){
             ans += addr_homepage;
         }
-        else if (c == '&'){
+        else if (c == '('){
             ans += edit_action;
         }
         else {

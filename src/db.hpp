@@ -82,7 +82,7 @@ private:
         
         int maxseqid_of_chatroom(int chatroom_id);
         /*
-        return -1 if that chatroom doesn't have any message yet
+        return 0 if that chatroom doesn't have any message yet
         */
     };
     class Table_Chatroom {

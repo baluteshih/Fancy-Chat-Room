@@ -202,6 +202,16 @@ namespace Handler {
             return -1;
         return 0;
     }
+    std::string get_chatroom_name(Chatroom &chatroom) {
+        std::string flist;
+        for (auto id : chatroom.user_idlist) {
+            User u = db.table_user.get_object(id);
+            if (!flist.empty())
+                flist += ", ";
+            flist += u.username;
+        }
+        return flist;
+    }
 };
 
 void help(char *name) {
@@ -248,42 +258,41 @@ void client_handler(HTTPSender *connection) {
                 }
             }
             else if (req.request_target == "/friend") {
-                if (req.method != "GET")
+                if (req.method != "GET") {
                     res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                    goto done;
+                }
+                std::vector<std::string> flist;
+                for (int id : user.friend_idlist)
+                    flist.push_back(Handler::get_username(id));
+                if (Handler::is_console(req)) {
+                    res.set_message(svector_to_string(flist));  
+                }
                 else {
-                    std::vector<std::string> flist;
-                    for (int id : user.friend_idlist)
-                        flist.push_back(Handler::get_username(id));
-                    if (Handler::is_console(req)) {
-                        res.set_message(svector_to_string(flist));  
-                    }
-                    else {
-                        res.set_message(manage_friend(flist, "manage_friend", "/"), true);
-                    }
+                    res.set_message(manage_friend(flist, "manage_friend", "/"), true);
                 }
             }
             else if (req.request_target == "/manage_friend") {
-                if (req.method != "POST")
+                if (req.method != "POST") {
                     res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                    goto done;
+                }
+                auto dataraw = Handler::data_parser(req.message_body); 
+                if (dataraw.find("username") == dataraw.end() ||
+                    dataraw.find("operation") == dataraw.end()) {
+                    res.set_status(HTTP::Status_Code::NotAcceptable);
+                    goto done;
+                }
+                if (dataraw["operation"] == "AddFriend") {
+                    Handler::add_friend(user, dataraw["username"]);
+                    res.set_redirect(res.header_field["Host"] + "/friend");
+                }
+                else if (dataraw["operation"] == "Unfriend") {
+                    Handler::delete_friend(user, dataraw["username"]);
+                    res.set_redirect(res.header_field["Host"] + "/friend");
+                }
                 else {
-                    auto dataraw = Handler::data_parser(req.message_body); 
-                    if (dataraw.find("username") == dataraw.end() ||
-                        dataraw.find("operation") == dataraw.end()) {
-                        res.set_status(HTTP::Status_Code::NotAcceptable);
-                    }
-                    else {
-                        if (dataraw["operation"] == "AddFriend") {
-                            Handler::add_friend(user, dataraw["username"]);
-                            res.set_redirect(res.header_field["Host"] + "/friend");
-                        }
-                        else if (dataraw["operation"] == "Unfriend") {
-                            Handler::delete_friend(user, dataraw["username"]);
-                            res.set_redirect(res.header_field["Host"] + "/friend");
-                        }
-                        else {
-                            res.set_status(HTTP::Status_Code::NotAcceptable);
-                        }
-                    }
+                    res.set_status(HTTP::Status_Code::NotAcceptable);
                 }
             }
             else if (req.request_target == "/setting") {
@@ -298,7 +307,7 @@ void client_handler(HTTPSender *connection) {
                 }
             }
             else if (int(req.request_target.size()) >= 9 && req.request_target.substr(0, 9) == "/chatroom") {
-                std::string target_stack = "/chatroom";
+                std::string target_stack = "chatroom";
                 req.request_target.erase(0, 9);
                 if (req.request_target.empty()) {
                     auto roomlist = db.table_chatroom.get_chatroom_list(user.user_id);
@@ -306,14 +315,7 @@ void client_handler(HTTPSender *connection) {
                         std::vector<std::string> chatlist;
                         std::vector<std::string> hreflist;
                         for (auto chat : roomlist) {
-                            std::string flist;
-                            for (auto id : chat.user_idlist) {
-                                User u = db.table_user.get_object(id);
-                                if (!flist.empty())
-                                    flist += ", ";
-                                flist += u.username;
-                            }
-                            chatlist.push_back(flist);
+                            chatlist.push_back(Handler::get_chatroom_name(chat));
                             hreflist.push_back("chatroom/" + std::to_string(chat.chatroom_id));
                         }
                         res.set_message(manage_chatroom(chatlist, hreflist, "chatroom", "/"), true);
@@ -371,13 +373,10 @@ void client_handler(HTTPSender *connection) {
                         if (id == user.user_id)
                             valid = 1;
                     if (valid == 1) {
+                        int maxid = db.table_message.maxseqid_of_chatroom(chat_id);
                         if (req.request_target.empty()) {
                             if (req.method == "GET") {
-                                // TODO: html
-                            }
-                            else if (req.method == "POST") {
-                                // TODO: action
-                                res.set_redirect(res.header_field["Host"] + target_stack);
+                                res.set_redirect(res.header_field["Host"] + "/" + target_stack + "/" + std::to_string(maxid));
                             }
                             else {
                                 res.set_status(HTTP::Status_Code::MethodNotAllowed);
@@ -386,28 +385,30 @@ void client_handler(HTTPSender *connection) {
                         else if (req.request_target == "/manage_member") {
                             if (req.method != "POST") {
                                 res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                                goto done;
                             }
-                            else {
-                                auto dataraw = Handler::data_parser(req.message_body); 
-                                if (dataraw.find("username") == dataraw.end() ||
-                                        dataraw.find("operation") == dataraw.end()) {
-                                    res.set_status(HTTP::Status_Code::NotAcceptable);
-                                }
-                                int mid = db.table_user.get_id(dataraw["username"]);
-                                int flag = 0;
-                                for (int id : user.friend_idlist)
+                            auto dataraw = Handler::data_parser(req.message_body); 
+                            if (dataraw.find("username") == dataraw.end() ||
+                                dataraw.find("operation") == dataraw.end()) {
+                                res.set_status(HTTP::Status_Code::NotAcceptable);
+                                goto done;
+                            }
+                            int mid = db.table_user.get_id(dataraw["username"]);
+                            int flag = 0;
+                            for (int id : user.friend_idlist)
+                                if (id == mid)
+                                    flag = 1;
+                            if (dataraw["operation"] == "Add") {
+                                for (int id : chatroom.user_idlist)
                                     if (id == mid)
-                                        flag = 1;
-                                if (dataraw["oepration"] == "Add" && flag) {
-                                    for (int id : chatroom.user_idlist)
-                                        if (id == mid)
-                                            flag = 0;
-                                    if (flag) {
-                                        db.table_chatroom.add_user(chatroom.chatroom_id, mid);
-                                    }
-                                    res.set_redirect(res.header_field["Host"] + target_stack);
+                                        flag = 0;
+                                if (flag) {
+                                    db.table_chatroom.add_user(chatroom.chatroom_id, mid);
                                 }
-                                else if (dataraw["operation"] == "Remove" && flag) {
+                                res.set_redirect(res.header_field["Host"] + "/" + target_stack);
+                            }
+                            else if (dataraw["operation"] == "Remove") {
+                                if (flag) {
                                     flag = 0;
                                     for (int id : chatroom.user_idlist)
                                         if (id == mid)
@@ -415,45 +416,77 @@ void client_handler(HTTPSender *connection) {
                                     if (flag) {
                                         db.table_chatroom.delete_user(chatroom.chatroom_id, mid);
                                     }
-                                    res.set_redirect(res.header_field["Host"] + target_stack);
                                 }
-                                else {
-                                    res.set_status(HTTP::Status_Code::NotAcceptable);
-                                }
+                                res.set_redirect(res.header_field["Host"] + "/" + target_stack);
                             }
+                            else {
+                                res.set_status(HTTP::Status_Code::NotAcceptable);
+                            }
+                        }
+                        else if (req.request_target == "/send") {
+                            if (req.method != "POST") {
+                                res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                                goto done;
+                            }
+                            // TODO: action 
                         }
                         else if (req.request_target == "/upload") {
                             if (req.method != "POST") {
                                 res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                                goto done;
                             }
-                            else {
-                                // TODO: action 
-                            }
+                            // TODO: action 
                         }
                         else if (req.request_target[0] == '/') {
-                            if (req.method != "GET")
-                                res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                            req.request_target.erase(0, 1);
+                            std::string tmp2;
+                            for (char c : req.request_target)
+                                if (std::isdigit(c))
+                                    tmp2.push_back(c);
+                                else
+                                    break;
+                            int msg_id = 0;
+                            if (!tmp2.empty())
+                                msg_id = std::stoi(tmp2);
+                            if (msg_id < 1)
+                                msg_id = 0;
+                            if (msg_id > maxid)
+                                msg_id = maxid;
+                            if (req.method == "GET") {
+                                std::string name = Handler::get_chatroom_name(chatroom);
+                                std::vector<std::string> mlist;
+                                std::string plink = std::to_string(msg_id - MESSAGE_BLOCK_SIZE);
+                                std::string nlink = std::to_string(msg_id + MESSAGE_BLOCK_SIZE);
+
+                                auto msg_vec = db.table_message.query_range_fixed_chatroom(chat_id, msg_id - MESSAGE_BLOCK_SIZE + 1, msg_id);
+                                for (Message msg : msg_vec) {
+                                    User sender = db.table_user.get_object(msg.sender_id);
+                                    std::string result = sender.username + ": ";
+                                    if (msg.type == 0) {
+                                        result += msg.text; 
+                                    }
+                                    else if (msg.type == 1) {
+                                        if (get_file_type(msg.text) == "image") {
+                                            result += img("file/" + msg.filehash);
+                                        }
+                                        else {
+                                            result += href("file/" + msg.filehash, msg.text); 
+                                        }
+                                    } 
+                                    else {
+                                        continue;
+                                    }
+                                    mlist.push_back(p(result));
+                                }
+
+                                res.set_message(chat_page(name, mlist, plink, nlink, "send", "upload", "manage_member", "/"), true);
+                            }
                             else {
-                                req.request_target.erase(0, 1);
-                                std::string tmp;
-                                for (char c : req.request_target)
-                                    if (std::isdigit(c))
-                                        tmp.push_back(c);
-                                    else
-                                        break;
-                                int msg_id = 0;
-                                int maxid = db.table_message.maxseqid_of_chatroom(chat_id);
-                                if (!tmp.empty())
-                                    msg_id = std::stoi(tmp);
-                                if (msg_id < 1)
-                                    msg_id = 1;
-                                if (msg_id > maxid)
-                                    msg_id = maxid;
-                                // TODO: fetch messages
+                                res.set_status(HTTP::Status_Code::MethodNotAllowed);
                             }
                         }
                         else {
-                            res.set_redirect(res.header_field["Host"] + target_stack);
+                            res.set_redirect(res.header_field["Host"] + "/" + target_stack);
                         }
                     }
                     else {
@@ -467,12 +500,15 @@ void client_handler(HTTPSender *connection) {
             else if (req.request_target == "/logout") {
                 if (req.method != "GET") {
                     res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                    goto done;
                 }
-                else {
-                    res.set_redirect(res.header_field["Host"] + "/login");
-                    res.header_field["Set-Cookie"] = "metadata=-1$null";
-                }
+                res.set_redirect(res.header_field["Host"] + "/login");
+                res.header_field["Set-Cookie"] = "metadata=-1$null";
             }
+            else if (req.request_target == "/favicon.ico")
+                res.set_file(path_combine(SERVER_PUBLIC_DIR, "favicon-16x16.png"));
+            else 
+                res.set_file(path_combine(SERVER_PUBLIC_DIR, req.request_target));
         }
         else {
             if (req.request_target == "/")
@@ -482,6 +518,7 @@ void client_handler(HTTPSender *connection) {
             else
                 res.set_file(path_combine(SERVER_PUBLIC_DIR, req.request_target));
         }
+done:
         int rtv = connection->send_response(res);
         if (rtv < 0)
             _helper_warning2("something wrong on http response", 1);

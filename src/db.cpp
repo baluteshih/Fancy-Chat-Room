@@ -387,11 +387,11 @@ int DataBase::Table_Message::maxseqid_of_chatroom(int chatroom_id){
 
     sqlcmd = "SELECT * FROM table_message WHERE chatroom_id = " + std::to_string(chatroom_id) + ";";
 
-    int ans = -1;
+    int ans = 0;
     res = sqlite3_exec(parent.db, sqlcmd.c_str(), callback_findMaxSeq, &ans, &zErrMsg);
     if (res != SQLITE_OK){
         sqlite3_free(zErrMsg);
-        _helper_fail("Fail to get max id.");
+        return 0;
     }
     return ans;
 }

@@ -15,5 +15,6 @@ const std::string NO_CHATROOM_QQ        = "Unfortunately, you don't have a chatr
 const int         MAXFD                 = getdtablesize();
 const int         IMAGE_WIDTH           = 100;
 const int         IMAGE_HEIGHT          = 120;
+const int         MESSAGE_BLOCK_SIZE    = 10;
 
 #endif // _PARAM_HPP_

@@ -1,4 +1,5 @@
 #include "crypto.hpp"
+#include "SHA256.h"
 #include <string>
 #include <cstdlib>
 #include <ctime>
@@ -20,7 +21,12 @@ std::string Random_Engine::gen_random_string(int len) {
 }
 
 std::string sha256sum(std::string plain) {
-    return plain; 
+    SHA256 sha;
+    sha.update(plain);
+    uint8_t *digest = sha.digest();
+    std::string rt = SHA256::toString(digest);
+    delete[] digest;
+    return rt; 
 }
 
 std::string hash_password(std::string plain, std::string salt) {

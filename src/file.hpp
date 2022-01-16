@@ -13,6 +13,10 @@ std::string path_combine(std::string path1, std::string path2);
 
 std::string path_combine(std::vector<std::string> paths);
 
+std::string get_file_extension(std::string filename);
+
+std::string get_file_type(std::string filename);
+
 class File {
     FILE *fp;
     std::string file_name;
