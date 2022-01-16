@@ -6,6 +6,7 @@
 #include "server_object.hpp"
 #include "file.hpp"
 #include "crypto.hpp"
+#include "html.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <utility>
@@ -17,7 +18,7 @@
 Main_Thread main_thread;
 DataBase db;
 
-namespace User_Handler {
+namespace Handler {
     std::unordered_map<std::string, std::string> data_parser(std::string dataraw) {
         std::unordered_map<std::string, std::string> rt;
         std::string attr, value;
@@ -45,21 +46,22 @@ namespace User_Handler {
     std::pair<int, std::string> cookie_parser(std::string cookie) {
         std::pair<int, std::string> rt;
         for (char &c : cookie)
-            if (c == '=' || c == ';')
+            if (c == '=' || c == '$')
                 c = ' ';
         std::stringstream ss(cookie);
         std::string tmp;
-        ss >> tmp >> rt.first >> tmp >> rt.second;
+        ss >> tmp >> rt.first >> rt.second;
         return rt;
     }
     bool cookie_format_checker(std::string cookie) {
         // TODO: content
+        // metadata=user_id$password
         return 1;
     }
-    User get_user(int id) {
-        if (id <= 0)
+    User get_user(int user_id) {
+        if (user_id <= 0)
             return User();
-        return db.table_user.get_object(id);
+        return db.table_user.get_object(user_id);
     }
     User get_user(HTTPRequest &req) {
         if (req.header_field.find("Cookie") == req.header_field.end())
@@ -67,6 +69,11 @@ namespace User_Handler {
         std::string cookie = req.header_field["Cookie"];
         auto rt = cookie_parser(cookie);
         return get_user(rt.first); 
+    }
+    std::string get_username(int user_id) {
+        if (user_id <= 0)
+            return "";
+        return get_user(user_id).username;
     }
     bool check_login(HTTPRequest &req) {
         if (req.header_field.find("Cookie") == req.header_field.end())
@@ -83,25 +90,84 @@ namespace User_Handler {
     void try_login(HTTPRequest &req, HTTPResponse &res) {
         auto dataraw = data_parser(req.message_body);
         if (dataraw.find("username") == dataraw.end() || dataraw.find("password") == dataraw.end()) {
-            res.set_file(path_combine(SERVER_PUBLIC_DIR, "login.html"));
+            res.set_file(path_combine(SERVER_PUBLIC_DIR, "Login_files/login_error.html"));
             return;
         }
         int user_id = db.table_user.get_id(dataraw["username"]);
         if (user_id <= 0) {
-            res.set_file(path_combine(SERVER_PUBLIC_DIR, "login.html"));
+            res.set_file(path_combine(SERVER_PUBLIC_DIR, "Login_files/login_fail.html"));
             return;
         }
         User user = get_user(user_id);
         std::string pass = hash_password(dataraw["password"], user.password.substr(0, 4));
         if (pass != user.password) {
-            res.set_file(path_combine(SERVER_PUBLIC_DIR, "login.html"));
+            res.set_file(path_combine(SERVER_PUBLIC_DIR, "Login_files/login_fail.html"));
             return;
         }
         res.set_redirect(res.header_field["Host"] + "/");
-        res.header_field["Set-Cookie"] = "userid=" + std::to_string(user_id) + "; password=" + pass;
+        res.header_field["Set-Cookie"] = "metadata=" + std::to_string(user_id) + "$" + pass;
     }
     void try_register(HTTPRequest &req, HTTPResponse &res) {
-        
+        auto dataraw = data_parser(req.message_body);
+        if (dataraw.find("username") == dataraw.end() || 
+            dataraw.find("password") == dataraw.end() || 
+            dataraw.find("password2") == dataraw.end()) {
+            res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_error.html"));
+            return;
+        }
+        if (dataraw["username"].empty()) {
+            res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_acc_invalid.html"));
+            return;
+        }
+        for (char c : dataraw["username"])
+            if (!(std::isalnum(c) || c == '_')) {
+                res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_acc_invalid.html"));
+                return;
+            }
+        if (int(dataraw["password"].size()) < 6) {
+            res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_pass_invalid.html"));
+            return;
+        }
+        for (char c : dataraw["password"])
+            if (!(std::isalnum(c) || c == '_')) {
+                res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_pass_invalid.html"));
+                return;
+            }
+        if (dataraw["password"] != dataraw["password2"]) {
+            res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_different.html"));
+            return;
+        }
+        User user;
+        user.username = dataraw["username"];
+        user.password = hash_password(dataraw["password"]);
+        _helper_msg(user.password);
+        if (db.table_user.create_user(user) < 0) {
+            res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_repeat.html"));
+        }
+        else {
+            res.set_redirect(res.header_field["Host"] + "/");
+            res.header_field["Set-Cookie"] = "metadata=" + std::to_string(user.user_id) + "$" + user.password;
+        }
+    }
+    bool is_console(HTTPRequest &req) {
+        return req.header_field.find("User-Agent") != req.header_field.end() && 
+               req.header_field["User-Agent"] == CONSOLE_AGENT;
+    }
+    int add_friend(User &user, std::string friend_name) {
+        int fid = db.table_user.get_id(friend_name);
+        if (fid <= 0)
+            return -1;
+        if (db.table_user.add_friend(user.user_id, fid) <= 0)
+            return -1;
+        return 0;
+    }
+    int delete_friend(User &user, std::string friend_name) {
+        int fid = db.table_user.get_id(friend_name);
+        if (fid <= 0)
+            return -1;
+        if (db.table_user.delete_friend(user.user_id, fid) <= 0)
+            return -1;
+        return 0;
     }
 };
 
@@ -111,63 +177,89 @@ void help(char *name) {
 }
 
 void client_handler(HTTPSender *connection) {
-    while (true) {
-        HTTPRequest req = connection->read_request();
+    HTTPRequest req = connection->read_request();
+    if (!req.method.empty()) {
         HTTPResponse res;
         if (req.request_target == "/login") {
-            if (User_Handler::check_login(req))
+            if (Handler::check_login(req))
                 res.set_redirect(res.header_field["Host"] + "/");
             else if (req.method == "GET")
-                res.set_file(path_combine(SERVER_PUBLIC_DIR, "login.html"));
+                res.set_file(path_combine(SERVER_PUBLIC_DIR, "Login_files/login.html"));
             else if (req.method == "POST") {
-                User_Handler::try_login(req, res);
+                Handler::try_login(req, res);
             }
             else {
                 res.set_status(HTTP::Status_Code::MethodNotAllowed);
             }
         }
         else if (req.request_target == "/register") {
-            if (User_Handler::check_login(req))
+            if (Handler::check_login(req))
                 res.set_redirect(res.header_field["Host"] + "/");
             else if (req.method == "GET") {
-                res.set_file(path_combine(SERVER_PUBLIC_DIR, "register.html"));
+                res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register.html"));
             }
             else if (req.method == "POST") {
-                User_Handler::try_register(req, res);
+                Handler::try_register(req, res);
             }
             else {
                 res.set_status(HTTP::Status_Code::MethodNotAllowed);
             }
         }
-        else if (User_Handler::check_login(req)) {
+        else if (Handler::check_login(req)) {
+            User user = Handler::get_user(req);
             if (req.request_target == "/") {
                 if (req.method != "GET")
                     res.set_status(HTTP::Status_Code::MethodNotAllowed);
                 else {
-                    // TODO: html
+                    res.set_message(homepage(user.username, "friend", "chatroom", "setting", "/"), true);
                 }
             }
-            else if (req.request_target == "/friend_list") {
+            else if (req.request_target == "/friend") {
                 if (req.method != "GET")
                     res.set_status(HTTP::Status_Code::MethodNotAllowed);
                 else {
+                    std::vector<std::string> flist;
+                    for (int id : user.friend_idlist)
+                        flist.push_back(Handler::get_username(id));
+                    if (Handler::is_console(req)) {
+                        res.set_message(svector_to_string(flist));  
+                    }
+                    else {
+                        res.set_message(manage_friend(flist, "manage_friend", "/"), true);
+                    }
+                }
+            }
+            else if (req.request_target == "/manage_friend") {
+                if (req.method != "POST")
+                    res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                else {
+                    if (req.header_field.find("username") == req.header_field.end() ||
+                        req.header_field.find("operation") == req.header_field.end())
+                        res.set_status(HTTP::Status_Code::NotAcceptable);
+                    else {
+                        if (req.header_field["operation"] == "AddFriend") {
+                            Handler::add_friend(user, req.header_field["username"]);
+                            res.set_redirect(res.header_field["Host"] + "/friend");
+                        }
+                        else if (req.header_field["operation"] == "Unfriend") {
+                            Handler::delete_friend(user, req.header_field["username"]);
+                            res.set_redirect(res.header_field["Host"] + "/friend");
+                        }
+                        else {
+                            res.set_status(HTTP::Status_Code::NotAcceptable);
+                        }
+                    }
+                }
+            }
+            else if (req.request_target == "/setting") {
+                if (req.method == "GET") {
                     // TODO: html
                 }
-            }
-            else if (req.request_target == "/add_friend") {
-                if (req.method != "POST")
-                    res.set_status(HTTP::Status_Code::MethodNotAllowed);
-                else {
-                    // TODO: action
-                    res.set_redirect(res.header_field["Host"] + "/friend");
+                else if (req.method == "POST") {
+
                 }
-            }
-            else if (req.request_target == "/delete_friend") {
-                if (req.method != "POST")
-                    res.set_status(HTTP::Status_Code::MethodNotAllowed);
                 else {
-                    // TODO: action
-                    res.set_redirect(res.header_field["Host"] + "/friend");
+                    res.set_status(HTTP::Status_Code::MethodNotAllowed);
                 }
             }
             else if (int(req.request_target.size()) >= 9 && req.request_target.substr(0, 9) == "/chatroom") {
@@ -245,7 +337,7 @@ void client_handler(HTTPSender *connection) {
                 }
                 else {
                     res.set_message("Bye~");
-                    res.header_field["Set-Cookie"] = "userid=-1; password=null";
+                    res.header_field["Set-Cookie"] = "metadata=-1$null";
                 }
             }
         }
@@ -256,9 +348,8 @@ void client_handler(HTTPSender *connection) {
                 res.set_file(path_combine(SERVER_PUBLIC_DIR, req.request_target));
         }
         int rtv = connection->send_response(res);
-        if (rtv < 0) {
+        if (rtv < 0)
             _helper_warning2("something wrong on http response", 1);
-        }
     }
     delete connection;
     main_thread.notify();
@@ -272,6 +363,7 @@ void polling_handler(HTTPServer &server) {
 }
 
 int main(int argc, char *argv[]) {
+    random_init();
     if (argc < 2)
         help(argv[0]);
     HTTPServer server(atoi(argv[1]));
