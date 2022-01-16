@@ -8,6 +8,15 @@ std::string path_combine(std::string path1, std::string path2) {
     return path1 + "/" + path2;
 }
 
+std::string path_combine(std::vector<std::string> paths) {
+    if (paths.empty())
+        return "";
+    std::string res = paths[0];
+    for (int i = 1; i < int(paths.size()); ++i)
+        res = path_combine(res, paths[i]);
+    return res;
+}
+
 File::File() : fp(NULL) {}
 
 size_t File::readf(void *buf, size_t count) {

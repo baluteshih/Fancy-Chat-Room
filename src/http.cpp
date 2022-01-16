@@ -191,15 +191,45 @@ int HTTPHeader::write_content(Socket &skt) {
 
 HTTPRequest::HTTPRequest() : HTTPHeader() {}
 
+void HTTPRequest::set_message(const std::string &message, const std::string &tar, const std::string &_method) {
+    header_field.clear();
+    message_body = message;
+    method = _method;
+    request_target = tar;
+    version = "HTTP/1.1";
+    header_field["Content-Type"] = "text/plain";
+    header_field["Content-Length"] = std::to_string(message_body.size());
+    header_field["Connection"] = "keep-alive";
+    set_type("TEXT");
+}
+
+void HTTPRequest::set_file(const std::string &file_name, const std::string &tar, const std::string &_method) {
+    header_field.clear();
+    if (file.file_open_read(file_name) < 0) {
+        set_type("UNKNOWN");
+        return;
+    }
+    version = "HTTP/1.1";
+    method = _method;
+    request_target = tar;
+    header_field["Content-Type"] = file.type() + "/" + file.extension();
+    header_field["Content-Length"] = std::to_string(file.size());
+    header_field["Connection"] = "keep-alive";
+    set_type("FILE");
+}
+
 HTTPResponse::HTTPResponse() : HTTPHeader() {}
 
-void HTTPResponse::set_message(const std::string &message) {
+void HTTPResponse::set_message(const std::string &message, bool ishtml) {
     header_field.clear();
     message_body = message;
     version = "HTTP/1.1";
     status_code = Status_Code::OK;
     header_field["Server"] = "Fancy Chat Room";
-    header_field["Content-Type"] = "text/plain";
+    if (ishtml)
+        header_field["Content-Type"] = "text/html";
+    else
+        header_field["Content-Type"] = "text/plain";
     header_field["Content-Length"] = std::to_string(message_body.size());
     header_field["Connection"] = "Close";
     set_type("TEXT");

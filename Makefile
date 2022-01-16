@@ -1,5 +1,5 @@
 CXXFLAGS = -O2 -std=c++17 -Wall -pthread -lsqlite3
-SRCS = src/helper.cpp src/http.cpp src/socket.cpp src/main_thread.cpp src/file.cpp src/db.cpp src/server_object.cpp src/crypto.cpp
+SRCS = src/helper.cpp src/http.cpp src/socket.cpp src/main_thread.cpp src/file.cpp src/db.cpp src/server_object.cpp src/crypto.cpp src/html.cpp
 OBJS = $(patsubst %.cpp, %.o, $(SRCS))
 DEPS = $(patsubst %.o, %.d, $(OBJS))
 INC = -I src
@@ -42,4 +42,4 @@ db_test: db_test.cpp $(OBJS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(OBJS) $(DEPS) test http_test db_test
+	rm -rf $(OBJS) $(DEPS) test http_test db_test server client

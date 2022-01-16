@@ -4,11 +4,14 @@
 #include <string>
 #include <cstdio>
 #include <cstddef>
+#include <vector>
 
 #define FILEBUF 65536
 using std::size_t;
 
 std::string path_combine(std::string path1, std::string path2);
+
+std::string path_combine(std::vector<std::string> paths);
 
 class File {
     FILE *fp;

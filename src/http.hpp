@@ -84,6 +84,8 @@ public:
     std::string method;
     std::string request_target;
     explicit HTTPRequest();
+    void set_message(const std::string &message, const std::string &tar, const std::string &_method);
+    void set_file(const std::string &file_name, const std::string &tar, const std::string &_method = "POST");
 };
 
 class HTTPResponse : public HTTPHeader {
@@ -91,7 +93,7 @@ private:
 public:
     Status_Code status_code;
     explicit HTTPResponse();
-    void set_message(const std::string &message);
+    void set_message(const std::string &message, bool ishtml = false);
     void set_file(const std::string &file_name);
     void set_redirect(const std::string &location);
     void set_status(Status_Code status);
