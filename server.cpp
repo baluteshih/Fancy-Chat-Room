@@ -8,6 +8,7 @@
 #include "crypto.hpp"
 #include "html.hpp"
 #include "SHA256.h"
+#include "url.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <utility>
@@ -555,11 +556,11 @@ void client_handler(HTTPSender *connection) {
                                     User sender = db.table_user.get_object(msg.sender_id);
                                     std::string result = sender.username + ": ";
                                     if (msg.type == 0) {
-                                        result += msg.text; 
+                                        result += urldecode(msg.text); 
                                     }
                                     else if (msg.type == 1) {
                                         if (get_file_type(msg.text) == "image") {
-                                            result += img(msg.filehash);
+                                            result += img("download/" + msg.filehash);
                                         }
                                         else {
                                             result += href("download/" + msg.filehash, msg.text); 

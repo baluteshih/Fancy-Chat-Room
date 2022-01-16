@@ -1,5 +1,5 @@
 CXXFLAGS = -O2 -std=c++17 -Wall -pthread -lsqlite3
-SRCS = src/helper.cpp src/http.cpp src/socket.cpp src/main_thread.cpp src/file.cpp src/db.cpp src/server_object.cpp src/crypto.cpp src/html.cpp src/SHA256.cpp
+SRCS = src/helper.cpp src/http.cpp src/socket.cpp src/main_thread.cpp src/file.cpp src/db.cpp src/server_object.cpp src/crypto.cpp src/html.cpp src/SHA256.cpp src/url.cpp
 OBJS = $(patsubst %.cpp, %.o, $(SRCS))
 DEPS = $(patsubst %.o, %.d, $(OBJS))
 INC = -I src
