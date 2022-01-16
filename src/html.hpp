@@ -33,6 +33,6 @@ std::string manage_chatroom(std::vector<std::string> chatroom_name, std::vector<
 
 std::string chat_page(std::string chatroom_name, std::vector<std::string> message, std::string prev_href, std::string next_href, std::string post_action, std::string addr_homepage);
 
-std::string update_password(std::string change_action, std::string addr_homepage);
+std::string update_password(std::string change_action, std::string addr_homepage, int type = 0);
 
 #endif // _HTML_HPP_

@@ -53,6 +53,16 @@ namespace Handler {
         ss >> tmp >> rt.first >> rt.second;
         return rt;
     }
+    bool password_format_checker(std::string password) {
+        if (int(password.size()) < 6) {
+            return 0;
+        }
+        for (char c : password)
+            if (!(std::isalnum(c) || c == '_')) {
+                return 0;
+            }
+        return 1;
+    }
     bool cookie_format_checker(std::string cookie) {
         // TODO: content
         // metadata=user_id$password
@@ -90,7 +100,7 @@ namespace Handler {
     void try_login(HTTPRequest &req, HTTPResponse &res) {
         auto dataraw = data_parser(req.message_body);
         if (dataraw.find("username") == dataraw.end() || dataraw.find("password") == dataraw.end()) {
-            res.set_file(path_combine(SERVER_PUBLIC_DIR, "Login_files/login_error.html"));
+            res.set_status(HTTP::Status_Code::NotAcceptable);
             return;
         }
         int user_id = db.table_user.get_id(dataraw["username"]);
@@ -112,7 +122,7 @@ namespace Handler {
         if (dataraw.find("username") == dataraw.end() || 
             dataraw.find("password") == dataraw.end() || 
             dataraw.find("password2") == dataraw.end()) {
-            res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_error.html"));
+            res.set_status(HTTP::Status_Code::NotAcceptable);
             return;
         }
         if (dataraw["username"].empty()) {
@@ -124,15 +134,10 @@ namespace Handler {
                 res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_acc_invalid.html"));
                 return;
             }
-        if (int(dataraw["password"].size()) < 6) {
+        if (!password_format_checker(dataraw["password"])) {
             res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_pass_invalid.html"));
             return;
         }
-        for (char c : dataraw["password"])
-            if (!(std::isalnum(c) || c == '_')) {
-                res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_pass_invalid.html"));
-                return;
-            }
         if (dataraw["password"] != dataraw["password2"]) {
             res.set_file(path_combine(SERVER_PUBLIC_DIR, "Register_files/register_different.html"));
             return;
@@ -148,6 +153,34 @@ namespace Handler {
             res.set_redirect(res.header_field["Host"] + "/");
             res.header_field["Set-Cookie"] = "metadata=" + std::to_string(user.user_id) + "$" + user.password;
         }
+    }
+    void change_password(HTTPRequest &req, HTTPResponse &res) {
+        auto dataraw = data_parser(req.message_body);
+        if (dataraw.find("oldpwd") == dataraw.end() || 
+            dataraw.find("newpwd") == dataraw.end() || 
+            dataraw.find("newpwd2") == dataraw.end()) {
+            res.set_status(HTTP::Status_Code::NotAcceptable);
+            return;
+        }
+        std::string cookie = req.header_field["Cookie"];
+        auto rt = cookie_parser(cookie);
+        std::string pass = hash_password(dataraw["oldpwd"], rt.second.substr(0, 4));
+        if (pass != rt.second) {
+            res.set_message(update_password("setting", "/", 1));
+            return;    
+        }
+        if (!password_format_checker(dataraw["newpwd"])) {
+            res.set_message(update_password("setting", "/", 2));
+            return;    
+        }
+        if (dataraw["newpwd"] != dataraw["newpwd2"]) {
+            res.set_message(update_password("setting", "/", 3));
+            return;    
+        }
+        pass = hash_password(dataraw["newpwd"]);
+        res.set_redirect(res.header_field["Host"] + "/");
+        res.header_field["Set-Cookie"] = "metadata=" + std::to_string(rt.first) + "$" + pass;
+        db.table_user.update_password(rt.first, pass);
     }
     bool is_console(HTTPRequest &req) {
         return req.header_field.find("User-Agent") != req.header_field.end() && 
@@ -256,10 +289,10 @@ void client_handler(HTTPSender *connection) {
             }
             else if (req.request_target == "/setting") {
                 if (req.method == "GET") {
-                    // TODO: html
+                    res.set_message(update_password("setting", "/"), true);
                 }
                 else if (req.method == "POST") {
-
+                    Handler::change_password(req, res);
                 }
                 else {
                     res.set_status(HTTP::Status_Code::MethodNotAllowed);

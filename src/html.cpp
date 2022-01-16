@@ -141,8 +141,16 @@ std::string chat_page(std::string chatroom_name, std::vector<std::string> messag
     }
     return ans;
 }
-std::string update_password(std::string change_action, std::string addr_homepage){
-    const std::string filename(path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "html", "update_password.html"})));
+std::string update_password(std::string change_action, std::string addr_homepage, int type){
+    std::string filename;
+    if (type == 1)
+        filename = path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "html", "change_password_passfail.html"}));
+    else if (type == 2)
+        filename = path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "html", "change_password_invalid.html"}));
+    else if (type == 3)
+        filename = path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "html", "change_password_different.html"}));
+    else
+        filename = path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "html", "change_password.html"}));
     std::ifstream input_file(filename);
     std::string ans;
     char c;
