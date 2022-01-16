@@ -244,7 +244,7 @@ void client_handler(HTTPSender *connection) {
                 if (req.method != "GET")
                     res.set_status(HTTP::Status_Code::MethodNotAllowed);
                 else {
-                    res.set_message(homepage(user.username, "friend", "chatroom", "setting", "/"), true);
+                    res.set_message(homepage(user.username, "friend", "chatroom", "setting", "/", "logout"), true);
                 }
             }
             else if (req.request_target == "/friend") {
@@ -270,7 +270,6 @@ void client_handler(HTTPSender *connection) {
                     if (dataraw.find("username") == dataraw.end() ||
                         dataraw.find("operation") == dataraw.end()) {
                         res.set_status(HTTP::Status_Code::NotAcceptable);
-                        _helper_log("Not Acceptable");
                     }
                     else {
                         if (dataraw["operation"] == "AddFriend") {
@@ -302,10 +301,56 @@ void client_handler(HTTPSender *connection) {
                 std::string target_stack = "/chatroom";
                 req.request_target.erase(0, 9);
                 if (req.request_target.empty()) {
-                    if (req.method != "GET")
-                        res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                    auto roomlist = db.table_chatroom.get_chatroom_list(user.user_id);
+                    if (req.method == "GET") {
+                        std::vector<std::string> chatlist;
+                        std::vector<std::string> hreflist;
+                        for (auto chat : roomlist) {
+                            std::string flist;
+                            for (auto id : chat.user_idlist) {
+                                User u = db.table_user.get_object(id);
+                                if (!flist.empty())
+                                    flist += ", ";
+                                flist += u.username;
+                            }
+                            chatlist.push_back(flist);
+                            hreflist.push_back("chatroom/" + std::to_string(chat.chatroom_id));
+                        }
+                        res.set_message(manage_chatroom(chatlist, hreflist, "chatroom", "/"), true);
+                    }
+                    else if (req.method == "POST") {
+                        auto dataraw = Handler::data_parser(req.message_body); 
+                        if (dataraw.find("member") == dataraw.end()) {
+                            res.set_status(HTTP::Status_Code::NotAcceptable);
+                        }
+                        int mid = db.table_user.get_id(dataraw["member"]);
+                        _helper_log(std::to_string(user.user_id) + " creates chatroom with " + std::to_string(mid));
+                        if (mid > 0) {
+                            int flag = 0;
+                            if (mid == user.user_id)
+                                flag = 1;
+                            for (int fid : user.friend_idlist) {
+                                if (fid == mid)
+                                    flag = 1;
+                            }
+                            if (flag == 1) {
+                                for (auto chat : roomlist) {
+                                    if (chat.user_idlist.size() == 1 && chat.user_idlist[0] == mid)
+                                        flag = 0;
+                                }
+                                if (flag == 1) {
+                                    Chatroom cht;
+                                    cht.user_idlist.push_back(user.user_id);
+                                    if (mid != user.user_id)
+                                        cht.user_idlist.push_back(mid);
+                                    db.table_chatroom.create_chatroom(cht);
+                                }
+                            }
+                        }
+                        res.set_redirect(res.header_field["Host"] + "/chatroom");
+                    }
                     else {
-                        // TODO: html
+                        res.set_status(HTTP::Status_Code::MethodNotAllowed);
                     }
                 }
                 else if (req.request_target[0] == '/') {
@@ -332,6 +377,9 @@ void client_handler(HTTPSender *connection) {
                         else {
                             res.set_status(HTTP::Status_Code::MethodNotAllowed);
                         }
+                    }
+                    else if (req.request_target == "/manage_member") {
+                        // TODO: action 
                     }
                     else if (req.request_target == "/upload") {
                         // TODO: action
@@ -368,11 +416,11 @@ void client_handler(HTTPSender *connection) {
                 }
             }
             else if (req.request_target == "/logout") {
-                if (req.method != "POST") {
+                if (req.method != "GET") {
                     res.set_status(HTTP::Status_Code::MethodNotAllowed);
                 }
                 else {
-                    res.set_message("Bye~");
+                    res.set_redirect(res.header_field["Host"] + "/login");
                     res.header_field["Set-Cookie"] = "metadata=-1$null";
                 }
             }

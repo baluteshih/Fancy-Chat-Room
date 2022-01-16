@@ -29,7 +29,7 @@ std::string homepage(std::string username, std::string addr_manage_friend, std::
 
 std::string manage_friend(std::vector<std::string> friend_name, std::string form_action, std::string addr_homepage);
 
-std::string manage_chatroom(std::vector<std::string> chatroom_name, std::vector<std::string> href_name, std::string create_action, std::string edit_action, std::string addr_homepage);
+std::string manage_chatroom(std::vector<std::string> chatroom_name, std::vector<std::string> href_name, std::string create_action, std::string addr_homepage);
 
 std::string chat_page(std::string chatroom_name, std::vector<std::string> message, std::string prev_href, std::string next_href, std::string post_action, std::string addr_homepage);
 

@@ -75,7 +75,7 @@ std::string manage_friend(std::vector<std::string> friend_name, std::string form
     }
     return ans;
 }
-std::string manage_chatroom(std::vector<std::string> chatroom_name, std::vector<std::string> href_name, std::string create_action, std::string edit_action, std::string addr_homepage){
+std::string manage_chatroom(std::vector<std::string> chatroom_name, std::vector<std::string> href_name, std::string create_action, std::string addr_homepage){
     if ((int)chatroom_name.size() != (int)href_name.size()){
         _helper_fail("#chatroom != #href");
     }
@@ -98,9 +98,6 @@ std::string manage_chatroom(std::vector<std::string> chatroom_name, std::vector<
         }
         else if (c == '@'){
             ans += create_action;
-        }
-        else if (c == '&'){
-            ans += edit_action;
         }
         else if (c == '`'){
             ans += addr_homepage;
