@@ -359,8 +359,9 @@ int DataBase::Table_Message::get_id(int chatroom_id, int sequence_id){
 }
 std::vector<Message> DataBase::Table_Message::query_range_fixed_chatroom
 (int chatroom_id, int lower, int upper){
+    lower = max(1, lower);
     if (lower > upper)
-        _helper_fail("Call query_range_fixed_chatroom but lower > upper.");
+        return vector<Message>();
 
     std::vector<Message> ans;
     for (int i = lower; i <= upper; i++)
