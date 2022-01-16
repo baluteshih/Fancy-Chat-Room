@@ -421,10 +421,10 @@ void client_handler(HTTPSender *connection) {
                             }
                             int mid = db.table_user.get_id(dataraw["username"]);
                             int flag = 0;
-                            for (int id : user.friend_idlist)
-                                if (id == mid)
-                                    flag = 1;
                             if (dataraw["operation"] == "Add") {
+                                for (int id : user.friend_idlist)
+                                    if (id == mid)
+                                        flag = 1;
                                 for (int id : chatroom.user_idlist)
                                     if (id == mid)
                                         flag = 0;
@@ -434,14 +434,12 @@ void client_handler(HTTPSender *connection) {
                                 res.set_redirect(res.header_field["Host"] + "/" + target_stack);
                             }
                             else if (dataraw["operation"] == "Remove") {
+                                flag = 0;
+                                for (int id : chatroom.user_idlist)
+                                    if (id == mid)
+                                        flag = 1;
                                 if (flag) {
-                                    flag = 0;
-                                    for (int id : chatroom.user_idlist)
-                                        if (id == mid)
-                                            flag = 1;
-                                    if (flag) {
-                                        db.table_chatroom.delete_user(chatroom.chatroom_id, mid);
-                                    }
+                                    db.table_chatroom.delete_user(chatroom.chatroom_id, mid);
                                 }
                                 res.set_redirect(res.header_field["Host"] + "/" + target_stack);
                             }
