@@ -274,6 +274,9 @@ void HTTPResponse::set_status(Status_Code status) {
     else if (status == Status_Code::InternalServerError) {
         message_body = "500 Internal Server Error";
     }
+    else if (status == Status_Code::NotAcceptable) {
+        message_body = "406 Not Acceptable";
+    }
     else {
         status_code = Status_Code::NotImplemented;
         message_body = "Unexpected Error";

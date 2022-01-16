@@ -233,16 +233,19 @@ void client_handler(HTTPSender *connection) {
                 if (req.method != "POST")
                     res.set_status(HTTP::Status_Code::MethodNotAllowed);
                 else {
-                    if (req.header_field.find("username") == req.header_field.end() ||
-                        req.header_field.find("operation") == req.header_field.end())
+                    auto dataraw = Handler::data_parser(req.message_body); 
+                    if (dataraw.find("username") == dataraw.end() ||
+                        dataraw.find("operation") == dataraw.end()) {
                         res.set_status(HTTP::Status_Code::NotAcceptable);
+                        _helper_log("Not Acceptable");
+                    }
                     else {
-                        if (req.header_field["operation"] == "AddFriend") {
-                            Handler::add_friend(user, req.header_field["username"]);
+                        if (dataraw["operation"] == "AddFriend") {
+                            Handler::add_friend(user, dataraw["username"]);
                             res.set_redirect(res.header_field["Host"] + "/friend");
                         }
-                        else if (req.header_field["operation"] == "Unfriend") {
-                            Handler::delete_friend(user, req.header_field["username"]);
+                        else if (dataraw["operation"] == "Unfriend") {
+                            Handler::delete_friend(user, dataraw["username"]);
                             res.set_redirect(res.header_field["Host"] + "/friend");
                         }
                         else {
