@@ -8,7 +8,7 @@ std::string img(std::string src){
     return "<img src=\"" + src + "\" width=" + std::to_string(IMAGE_WIDTH) + " height=" + std::to_string(IMAGE_HEIGHT) + "/>";
 }
 std::string href(std::string download_link, std::string filename){
-    return "<a href=\"" + download_link + "\">" + filename +"</a>";
+    return "<a href=\"" + download_link + "\" download=\"" + filename + "\">" + filename +"</a>";
 }
 std::string homepage(std::string username, std::string addr_manage_friend, std::string addr_list_chatroom, std::string addr_change_password, std::string addr_homepage, std::string addr_logout){
     std::map<std::string, std::string> val;

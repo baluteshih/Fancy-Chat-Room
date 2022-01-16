@@ -464,9 +464,10 @@ void client_handler(HTTPSender *connection) {
                                     int rt = tmpf.readf(buffer, std::min(sz - cur, (long long)FILEBUF - 1));
                                     buffer[rt] = 0;
                                     sha256sum.update(std::string(buffer));
+                                    cur += rt;
                                 }
                                 uint8_t *digest = sha256sum.digest();
-                                message.filehash = path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "file", SHA256::toString(digest)}));
+                                message.filehash = SHA256::toString(digest);
                                 delete[] digest;
                             }
                             tmpf.seekto(0);
@@ -485,7 +486,7 @@ void client_handler(HTTPSender *connection) {
                                     line.pop_back();
                                     int pos = line.find("filename=\"") + 10;
                                     message.text = line.substr(pos);
-                                    message.filehash += get_file_extension(message.text);
+                                    message.filehash += "." + get_file_extension(message.text);
                                 }
                             }
                             long long cur = tmpf.get_pos();
@@ -503,13 +504,14 @@ void client_handler(HTTPSender *connection) {
                                         break;
                                 }
                             }
-                            endpos = tmpf.get_pos();
+                            endpos = tmpf.get_pos() - 2;
                             tmpf.seekto(cur);
-                            realf.file_open_write(message.filehash);
+                            realf.file_open_write(path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "file", message.filehash})));
                             char buffer[FILEBUF];
                             while (cur < endpos) {
                                 int rt = tmpf.readf(buffer, std::min(endpos - cur, (long long)FILEBUF));
                                 realf.writef(buffer, rt);
+                                cur += rt;
                             }
                             tmpf.file_close(), realf.file_close();
                             remove(tmp_file_name.c_str());
@@ -519,6 +521,10 @@ void client_handler(HTTPSender *connection) {
                             message.type = 1;
                             db.table_message.create_message(message);
                             res.set_redirect(res.header_field["Host"] + "/" + target_stack);
+                        }
+                        else if (int(req.request_target.size() > 10) && req.request_target.substr(0, 10) == "/download/") {
+                            req.request_target.erase(0, 10);
+                            res.set_file(path_combine(std::vector<std::string>({SERVER_PUBLIC_DIR, "file", req.request_target})));
                         }
                         else if (req.request_target[0] == '/') {
                             req.request_target.erase(0, 1);
@@ -531,10 +537,13 @@ void client_handler(HTTPSender *connection) {
                             int msg_id = 0;
                             if (!tmp2.empty())
                                 msg_id = std::stoi(tmp2);
+                            else
+                                msg_id = maxid;
                             if (msg_id < 1)
                                 msg_id = 0;
                             if (msg_id > maxid)
                                 msg_id = maxid;
+                            req.request_target.erase(0, tmp2.size());
                             if (req.method == "GET") {
                                 std::string name = Handler::get_chatroom_name(chatroom);
                                 std::vector<std::string> mlist;
@@ -550,10 +559,10 @@ void client_handler(HTTPSender *connection) {
                                     }
                                     else if (msg.type == 1) {
                                         if (get_file_type(msg.text) == "image") {
-                                            result += img("file/" + msg.filehash);
+                                            result += img(msg.filehash);
                                         }
                                         else {
-                                            result += href("file/" + msg.filehash, msg.text); 
+                                            result += href("download/" + msg.filehash, msg.text); 
                                         }
                                     } 
                                     else {
