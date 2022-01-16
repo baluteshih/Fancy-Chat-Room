@@ -15,7 +15,14 @@ First, run
 $ make all
 ```
 
-Then, run
+### Console Mode
+Run
+```
+$ ok ok
+```
+
+### Web Mode
+Run
 ```
 $ ./server <port_number>
 ```
