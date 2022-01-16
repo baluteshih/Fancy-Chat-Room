@@ -118,6 +118,8 @@ std::string chat_page(std::string chatroom_name, std::vector<std::string> messag
             ans += chatroom_name;
         }
         else if (c == '$'){
+            if (message.empty())
+                ans += p(NO_MESSAGE_QQ);
             for (auto m : message)
                 ans += "\t" + p(m) + '\n';
         }
