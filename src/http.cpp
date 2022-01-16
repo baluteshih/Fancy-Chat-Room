@@ -346,7 +346,7 @@ HTTPRequest HTTPSender::read_request() {
     if (req.read_content(skt) < 0) {
         return req;
     }
-    _helper_log("read " + req.method + " " + req.request_target + " " + req.version);
+    _helper_msg("read " + req.method + " " + req.request_target + " " + req.version);
     return req; 
 }
 
@@ -359,10 +359,10 @@ int HTTPSender::send_request(HTTPRequest &req) {
         return -1;
     if (req.write_content(skt) < 0)
         return -1;
-    _helper_log(req.method + " " + req.request_target + " " + req.version);
+    _helper_msg(req.method + " " + req.request_target + " " + req.version);
     for (auto [n, v] : req.header_field)
-        _helper_log(n + ": " + v);
-    _helper_log(req.message_body);
+        _helper_msg(n + ": " + v);
+    _helper_msg(req.message_body);
     return 0;
 }
 
@@ -394,10 +394,10 @@ HTTPResponse HTTPSender::read_response() {
     if (res.read_content(skt) < 0) {
         return res;
     }
-    _helper_log(res.version + " " + std::to_string(int(res.status_code)) + " " + Reason_phrase(int(res.status_code)));
+    _helper_msg(res.version + " " + std::to_string(int(res.status_code)) + " " + Reason_phrase(int(res.status_code)));
     for (auto [n, v] : res.header_field)
-        _helper_log(n + ": " + v);
-    _helper_log(res.message_body);
+        _helper_msg(n + ": " + v);
+    _helper_msg(res.message_body);
     return res; 
 }
 
@@ -410,7 +410,7 @@ int HTTPSender::send_response(HTTPResponse &res) {
         return -1;
     if (res.write_content(skt) < 0)
         return -1;
-    _helper_log("send " + res.version + " " + std::to_string(int(res.status_code)) + " " + Reason_phrase(int(res.status_code)));
+    _helper_msg("send " + res.version + " " + std::to_string(int(res.status_code)) + " " + Reason_phrase(int(res.status_code)));
     return 0;
 }
 
@@ -443,6 +443,6 @@ HTTPSender* HTTPServer::wait_client() {
     }
     HTTPSender* rt = new HTTPSender(conn_fd);
     rt->host = inet_ntoa(cliaddr.sin_addr);
-    _helper_log("get new request fd " + std::to_string(conn_fd) + " from " + rt->host);
+    _helper_msg("get new request fd " + std::to_string(conn_fd) + " from " + rt->host);
     return rt;
 }
