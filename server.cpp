@@ -364,51 +364,100 @@ void client_handler(HTTPSender *connection) {
                             break;
                     req.request_target.erase(0, int(tmp.size()));
                     int chat_id = std::stoi(tmp);
+                    int valid = 0;
                     target_stack += tmp;
                     Chatroom chatroom = db.table_chatroom.get_object(chat_id);
-                    if (req.request_target.empty()) {
-                        if (req.method == "GET") {
-                            // TODO: html
+                    for (int id : chatroom.user_idlist)
+                        if (id == user.user_id)
+                            valid = 1;
+                    if (valid == 1) {
+                        if (req.request_target.empty()) {
+                            if (req.method == "GET") {
+                                // TODO: html
+                            }
+                            else if (req.method == "POST") {
+                                // TODO: action
+                                res.set_redirect(res.header_field["Host"] + target_stack);
+                            }
+                            else {
+                                res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                            }
                         }
-                        else if (req.method == "POST") {
-                            // TODO: action
+                        else if (req.request_target == "/manage_member") {
+                            if (req.method != "POST") {
+                                res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                            }
+                            else {
+                                auto dataraw = Handler::data_parser(req.message_body); 
+                                if (dataraw.find("username") == dataraw.end() ||
+                                        dataraw.find("operation") == dataraw.end()) {
+                                    res.set_status(HTTP::Status_Code::NotAcceptable);
+                                }
+                                int mid = db.table_user.get_id(dataraw["username"]);
+                                int flag = 0;
+                                for (int id : user.friend_idlist)
+                                    if (id == mid)
+                                        flag = 1;
+                                if (dataraw["oepration"] == "Add" && flag) {
+                                    for (int id : chatroom.user_idlist)
+                                        if (id == mid)
+                                            flag = 0;
+                                    if (flag) {
+                                        db.table_chatroom.add_user(chatroom.chatroom_id, mid);
+                                    }
+                                    res.set_redirect(res.header_field["Host"] + target_stack);
+                                }
+                                else if (dataraw["operation"] == "Remove" && flag) {
+                                    flag = 0;
+                                    for (int id : chatroom.user_idlist)
+                                        if (id == mid)
+                                            flag = 1;
+                                    if (flag) {
+                                        db.table_chatroom.delete_user(chatroom.chatroom_id, mid);
+                                    }
+                                    res.set_redirect(res.header_field["Host"] + target_stack);
+                                }
+                                else {
+                                    res.set_status(HTTP::Status_Code::NotAcceptable);
+                                }
+                            }
+                        }
+                        else if (req.request_target == "/upload") {
+                            if (req.method != "POST") {
+                                res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                            }
+                            else {
+                                // TODO: action 
+                            }
+                        }
+                        else if (req.request_target[0] == '/') {
+                            if (req.method != "GET")
+                                res.set_status(HTTP::Status_Code::MethodNotAllowed);
+                            else {
+                                req.request_target.erase(0, 1);
+                                std::string tmp;
+                                for (char c : req.request_target)
+                                    if (std::isdigit(c))
+                                        tmp.push_back(c);
+                                    else
+                                        break;
+                                int msg_id = 0;
+                                int maxid = db.table_message.maxseqid_of_chatroom(chat_id);
+                                if (!tmp.empty())
+                                    msg_id = std::stoi(tmp);
+                                if (msg_id < 1)
+                                    msg_id = 1;
+                                if (msg_id > maxid)
+                                    msg_id = maxid;
+                                // TODO: fetch messages
+                            }
+                        }
+                        else {
                             res.set_redirect(res.header_field["Host"] + target_stack);
-                        }
-                        else {
-                            res.set_status(HTTP::Status_Code::MethodNotAllowed);
-                        }
-                    }
-                    else if (req.request_target == "/manage_member") {
-                        // TODO: action 
-                    }
-                    else if (req.request_target == "/upload") {
-                        // TODO: action
-                        res.set_redirect(res.header_field["Host"] + target_stack);
-                    }
-                    else if (req.request_target[0] == '/') {
-                        if (req.method != "GET")
-                            res.set_status(HTTP::Status_Code::MethodNotAllowed);
-                        else {
-                            req.request_target.erase(0, 1);
-                            std::string tmp;
-                            for (char c : req.request_target)
-                                if (std::isdigit(c))
-                                    tmp.push_back(c);
-                                else
-                                    break;
-                            int msg_id = 0;
-                            int maxid = db.table_message.maxseqid_of_chatroom(chat_id);
-                            if (!tmp.empty())
-                                msg_id = std::stoi(tmp);
-                            if (msg_id < 1)
-                                msg_id = 1;
-                            if (msg_id > maxid)
-                                msg_id = maxid;
-                            // TODO: fetch messages
                         }
                     }
                     else {
-                        res.set_redirect(res.header_field["Host"] + target_stack);
+                        res.set_redirect(res.header_field["Host"] + "/chatroom");
                     }
                 }
                 else {
