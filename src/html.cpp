@@ -5,7 +5,7 @@ std::string p(std::string sentence){
     return "<p>" + sentence + "</p>";
 }
 std::string img(std::string src){
-    return "<img src=\"" + src + "\" width=" + std::to_string(IMAGE_WIDTH) + " height=" + std::to_string(IMAGE_HEIGHT) + ">";
+    return "<img src=\"" + src + "\" width=" + std::to_string(IMAGE_WIDTH) + " height=" + std::to_string(IMAGE_HEIGHT) + "/>";
 }
 std::string href(std::string download_link, std::string filename){
     return "<a href=\"" + download_link + "\">" + filename +"</a>";
