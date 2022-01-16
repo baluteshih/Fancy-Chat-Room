@@ -52,10 +52,15 @@ std::string manage_friend(std::vector<std::string> friend_name, std::string form
     char c;
     while (input_file.get(c)){
         if (c == '$'){
-            ans += "    <ol>\n";
-            for (auto name : friend_name)
-                ans += "        <li>" + name + "</li><br>\n";
-            ans += "    </ol>";
+            if (friend_name.empty()){
+                ans += p(NO_FRIEND_QQ);
+            }
+            else {
+                ans += "    <ol>\n";
+                for (auto name : friend_name)
+                    ans += "        <li>" + name + "</li><br>\n";
+                ans += "    </ol>";
+            }
         }
         else if (c == '@'){
             ans += form_action;
@@ -79,11 +84,16 @@ std::string manage_chatroom(std::vector<std::string> chatroom_name, std::vector<
     char c;
     while (input_file.get(c)){
         if (c == '$'){
-            ans += "    <ol>\n";
-            for (int i = 0; i < (int)chatroom_name.size(); i++){
-                ans += "        <li>" + chatroom_name[i] + "</li><a href=\"" + href_name[i] + "\"><button>Chat!</button></a><br>\n";
+            if (chatroom_name.empty()){
+                ans += p(NO_CHATROOM_QQ);
             }
-            ans += "    </ol>";
+            else {
+                ans += "    <ol>\n";
+                for (int i = 0; i < (int)chatroom_name.size(); i++){
+                    ans += "        <li>" + chatroom_name[i] + "</li><a href=\"" + href_name[i] + "\"><button>Chat!</button></a><br>\n";
+                }
+                ans += "    </ol>";
+            }
         }
         else if (c == '@'){
             ans += create_action;
